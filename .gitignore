@@ -1,0 +1,13 @@
+# Idea
+/.idea
+
+# Java
+/build
+/classes
+/.gradle
+/gradle
+/gradlew
+/gradlew.bat
+
+# Other
+*.swp

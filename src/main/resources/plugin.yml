@@ -1,0 +1,16 @@
+name: CustomVillage
+main: com.gmail.uprial.customvillage.CustomVillage
+version: 0.1.0
+commands:
+  customvillage:
+      description: Reload CustomVillage config
+      usage: /customvillage help
+      permission:
+      permission-message:
+permissions:
+  customvillage.reload:
+        description: Gives access to CustomVillage 'reload' command
+        default: op
+  customvillage.info:
+    description: Gives access to CustomVillage 'info' command
+    default: op
