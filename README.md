@@ -10,11 +10,13 @@ A Minecraft (Bukkit) plugin that allows to detect and control custom villages.
 
 ## Features
 
-* TBD
+* Detect villages and limit villagers population considering the beds' count
+* Limit population of cats and iron golems strongly according to the documentation
 
 ## Commands
 
 `customvillage reload` - reload config from disk
+`customvillage info` - show information about existing villages
 
 ## Permissions
 
