@@ -44,6 +44,11 @@ public class VillageInfo {
     }
 
     private Map<Integer,Village> getVillagesMap(World world) {
+        long startTime = 0;
+        if(customLogger.isDebugMode()) {
+            startTime = System.currentTimeMillis();
+        }
+
         // Populate an aggregator
         final ClusterAggregator aggregator = new ClusterAggregator(world, CLUSTER_SCALE, CLUSTER_SEARCH_DEPTH);
         aggregator.populate(world.getEntitiesByClass(Villager.class));
@@ -85,6 +90,11 @@ public class VillageInfo {
                 village.cats.add(cat);
             }
         });
+
+        if(customLogger.isDebugMode()) {
+            long endTime = System.currentTimeMillis();
+            customLogger.debug(String.format("Village info has been gathered in %dms.", (endTime - startTime)));
+        }
 
         for (Villager villager : lostVillagers) {
             customLogger.warning(String.format("Something went completely wrong and we lost a %s", format(villager)));
