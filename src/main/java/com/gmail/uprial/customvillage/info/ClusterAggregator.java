@@ -2,9 +2,11 @@ package com.gmail.uprial.customvillage.info;
 
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.util.Vector;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 class ClusterAggregator {
@@ -12,22 +14,27 @@ class ClusterAggregator {
     }
     private class PopulationMap extends HashMap<Vector, Population> {
     }
-    private class ClusterMap extends HashMap<Vector, Integer> {
-        ClusterMap() {
+
+    private class RegionCluster extends HashMap<Vector, Integer> {
+        RegionCluster() {
             super();
         }
-        ClusterMap(final ClusterMap clusterMap) {
-            super(clusterMap);
+        RegionCluster(final RegionCluster regionCluster) {
+            super(regionCluster);
         }
+    }
+
+    private class Region extends ArrayList<Vector> {
+    }
+    private class ClusterRegion extends HashMap<Integer, Region> {
     }
 
     private final World world;
     private final Vector scale;
     private final int searchDepth;
 
-    private PopulationMap populationMap = new PopulationMap();
-    private ClusterMap clusterMap = new ClusterMap();
-    private boolean optimized = false;
+    private RegionCluster regionCluster = new RegionCluster();
+    private ClusterRegion clusterRegion = new ClusterRegion();
 
     ClusterAggregator(final World world, final Vector scale, final int searchDepth) {
         this.world = world;
@@ -35,51 +42,70 @@ class ClusterAggregator {
         this.searchDepth = searchDepth;
     }
 
-    void add(final Vector vector) {
-        final Vector normalizedVector = getNormalizedVector(vector);
+    <T extends Entity> void populate(Collection<T> entities) {
+        final PopulationMap populationMap = new PopulationMap();
 
-        Population population = populationMap.get(normalizedVector);
-        if(population == null) {
-            population = new Population();
-            populationMap.put(normalizedVector, population);
+        for (Entity entity : entities) {
+            final Vector vector = entity.getLocation().toVector();
+            final Vector normalizedVector = getNormalizedVector(vector);
+
+            Population population = populationMap.get(normalizedVector);
+            if (population == null) {
+                population = new Population();
+                populationMap.put(normalizedVector, population);
+            }
+            population.add(vector);
         }
-        population.add(vector);
-        flush();
+
+        optimize(populationMap);
     }
 
     Set<Integer> getAllClusterIds() {
-        optimize();
-
-        return new HashSet<>(clusterMap.values());
+        return clusterRegion.keySet();
     }
 
     Integer getClusterId(Vector vector) {
-        optimize();
-        return clusterMap.get(getNormalizedVector(vector));
+        return regionCluster.get(getNormalizedVector(vector));
+    }
+
+    <T extends Entity> List<T> fetchEntities(Class<T> tClass, BiConsumer<Integer,T> consumer) {
+        List<T> lostEntities = new ArrayList<>();
+        for (T entity : world.getEntitiesByClass(tClass)) {
+            Integer clusterId = getClusterId(entity.getLocation().toVector());
+            if(clusterId != null) {
+                consumer.accept(clusterId, entity);
+            } else {
+                lostEntities.add(entity);
+            }
+        }
+
+        return lostEntities;
     }
 
     void fetchBlocksInCluster(int clusterId, Consumer<Block> consumer) {
-        Set<Vector> regions = new HashSet<>();
-        for (Map.Entry<Vector, Integer> entry : clusterMap.entrySet()) {
-            if (entry.getValue().equals(clusterId)) {
-                final Vector vector = entry.getKey();
-                final int x1 = vector.getBlockX() - searchDepth;
-                final int x2 = vector.getBlockX() + searchDepth;
-                final int y1 = vector.getBlockY() - searchDepth;
-                final int y2 = vector.getBlockY() + searchDepth;
-                final int z1 = vector.getBlockZ() - searchDepth;
-                final int z2 = vector.getBlockZ() + searchDepth;
-                for (int x = x1; x <= x2; x++) {
-                    for (int y = y1; y <= y2; y++) {
-                        for (int z = z1; z <= z2; z++) {
-                            regions.add(new Vector(x, y, z));
-                        }
+        Region region = clusterRegion.get(clusterId);
+        if(region == null) {
+            throw new VillageInfoError(String.format("Cluster #%d not found.", clusterId));
+        }
+
+        Set<Vector> nearRegion = new HashSet<>();
+        for (Vector vector : region) {
+            final int x1 = vector.getBlockX() - searchDepth;
+            final int x2 = vector.getBlockX() + searchDepth;
+            final int y1 = vector.getBlockY() - searchDepth;
+            final int y2 = vector.getBlockY() + searchDepth;
+            final int z1 = vector.getBlockZ() - searchDepth;
+            final int z2 = vector.getBlockZ() + searchDepth;
+            for (int x = x1; x <= x2; x++) {
+                for (int y = y1; y <= y2; y++) {
+                    for (int z = z1; z <= z2; z++) {
+                        nearRegion.add(new Vector(x, y, z));
                     }
                 }
             }
         }
 
-        for (Vector vector : regions) {
+        for (Vector vector : nearRegion) {
             final int x1 = (vector.getBlockX()) * scale.getBlockX();
             final int x2 = (vector.getBlockX() + 1) * scale.getBlockX() - 1;
             final int y1 = (vector.getBlockY()) * scale.getBlockY();
@@ -97,56 +123,67 @@ class ClusterAggregator {
         }
     }
 
-    private void flush() {
-        optimized = false;
-    }
+    // ==== PRIVATE METHODS ====
 
-    private void optimize() {
-        if(optimized) {
-            return;
-        }
+    private void optimize(PopulationMap populationMap) {
         int unloadedClusterIdCounter = 0;
-        final ClusterMap unloadedClusterMap = new ClusterMap();
-        for (final Map.Entry<Vector, Integer> entry : clusterMap.entrySet()) {
+        final RegionCluster unloadedRegionCluster = new RegionCluster();
+        for (final Map.Entry<Vector, Integer> entry : regionCluster.entrySet()) {
             final Vector vector = entry.getKey();
             final int clusterId = entry.getValue();
 
-            if(!isRegionLoaded(vector)) {
-                unloadedClusterMap.put(vector, clusterId);
+            if (!isRegionLoaded(vector)) {
+                unloadedRegionCluster.put(vector, clusterId);
                 unloadedClusterIdCounter = Math.max(unloadedClusterIdCounter, clusterId);
             }
         }
 
         boolean isFixed = false;
-        while(!isFixed) {
+        while (!isFixed) {
             int clusterIdCounter = unloadedClusterIdCounter;
-            final ClusterMap newClusterMap = new ClusterMap(unloadedClusterMap);
+            final RegionCluster newRegionCluster = new RegionCluster(unloadedRegionCluster);
 
             for (final Map.Entry<Vector, Population> entry : populationMap.entrySet()) {
                 final Population population = entry.getValue();
 
-                if(!population.isEmpty()) {
+                if (!population.isEmpty()) {
                     final Vector vector = entry.getKey();
 
-                    Integer newClusterId = findNearClusterId(newClusterMap, vector);
+                    Integer newClusterId = findNearClusterId(newRegionCluster, vector);
                     if (newClusterId == null) {
                         clusterIdCounter++;
                         newClusterId = clusterIdCounter;
                     }
 
-                    newClusterMap.put(vector, newClusterId);
+                    newRegionCluster.put(vector, newClusterId);
                 }
             }
 
-            if(newClusterMap.equals(clusterMap)) {
+            if (newRegionCluster.equals(regionCluster)) {
                 isFixed = true;
             }
-            clusterMap = newClusterMap;
+            regionCluster = newRegionCluster;
         }
-        optimized = true;
+
+        calculateClusterRegion();
     }
 
-    private Integer findNearClusterId(ClusterMap clusterMap, Vector vector) {
+    private void calculateClusterRegion() {
+        clusterRegion.clear();
+        for (Map.Entry<Vector, Integer> entry : regionCluster.entrySet()) {
+            Vector vector = entry.getKey();
+            Integer clusterId = entry.getValue();
+
+            Region region = clusterRegion.get(vector);
+            if (region == null) {
+                region = new Region();
+                clusterRegion.put(clusterId, region);
+            }
+            region.add(vector);
+        }
+    }
+
+    private Integer findNearClusterId(RegionCluster regionCluster, Vector vector) {
         final int x1 = vector.getBlockX() - searchDepth;
         final int x2 = vector.getBlockX() + searchDepth;
         final int y1 = vector.getBlockY() - searchDepth;
@@ -159,7 +196,7 @@ class ClusterAggregator {
                 for (int z = z1; z <= z2; z++) {
                     final Vector nearVector = new Vector(x, y, z);
                     if (!nearVector.equals(vector)) {
-                        final Integer nearClusterId = clusterMap.get(nearVector);
+                        final Integer nearClusterId = regionCluster.get(nearVector);
                         if (nearClusterId != null) {
                             return nearClusterId;
                         }
@@ -175,7 +212,7 @@ class ClusterAggregator {
         final int x = vector.getBlockX() * scale.getBlockX();
         final int z = vector.getBlockZ() * scale.getBlockZ();
         return world.isChunkLoaded(x, z)
-                && world.isChunkLoaded(x + scale.getBlockX(), z + scale.getBlockZ());
+                && world.isChunkLoaded(x + scale.getBlockX() - 1, z + scale.getBlockZ() - 1);
     }
 
     private Vector getNormalizedVector(Vector vector) {
@@ -192,7 +229,7 @@ class ClusterAggregator {
         map.put("world", world.toString());
         map.put("scale", scale.toString());
         map.put("searchDepth", String.valueOf(searchDepth));
-        map.put("clusterMap", clusterMap.toString());
+        map.put("regionCluster", regionCluster.toString());
 
         return map.toString();
     }

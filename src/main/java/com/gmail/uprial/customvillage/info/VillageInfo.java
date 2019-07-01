@@ -7,13 +7,11 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Bed;
 import org.bukkit.entity.Cat;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.IronGolem;
 import org.bukkit.entity.Villager;
 import org.bukkit.util.Vector;
 
 import java.util.*;
-import java.util.function.BiConsumer;
 
 import static com.gmail.uprial.customvillage.common.Formatter.format;
 
@@ -45,26 +43,10 @@ public class VillageInfo {
         this.customLogger = customLogger;
     }
 
-    private <T extends Entity> List<T> fetchEntities(World world, ClusterAggregator aggregator, Class<T> tClass, BiConsumer<Integer,T> consumer) {
-        List<T> lostEntities = new ArrayList<>();
-        for (T entity : world.getEntitiesByClass(tClass)) {
-            Integer clusterId = aggregator.getClusterId(entity.getLocation().toVector());
-            if(clusterId != null) {
-                consumer.accept(clusterId, entity);
-            } else {
-                lostEntities.add(entity);
-            }
-        }
-
-        return lostEntities;
-    }
-
     private Map<Integer,Village> getVillagesMap(World world) {
         // Populate an aggregator
         final ClusterAggregator aggregator = new ClusterAggregator(world, CLUSTER_SCALE, CLUSTER_SEARCH_DEPTH);
-        for (Villager villager : world.getEntitiesByClass(Villager.class)) {
-            aggregator.add(villager.getLocation().toVector());
-        }
+        aggregator.populate(world.getEntitiesByClass(Villager.class));
 
         // Populate villagesMap
         Map<Integer,Village> villagesMap = new HashMap<>();
@@ -83,13 +65,13 @@ public class VillageInfo {
         }
 
         // Count villagers
-        List<Villager> lostVillagers = fetchEntities(world, aggregator, Villager.class, (clusterId, villager) -> {
+        List<Villager> lostVillagers = aggregator.fetchEntities(Villager.class, (clusterId, villager) -> {
             Village village = villagesMap.get(clusterId);
             village.villagers.add(villager);
         });
 
         // Count ironGolems
-        List<IronGolem> lostIronGolems = fetchEntities(world, aggregator, IronGolem.class, (clusterId, ironGolem) -> {
+        List<IronGolem> lostIronGolems = aggregator.fetchEntities(IronGolem.class, (clusterId, ironGolem) -> {
             if(!ironGolem.isPlayerCreated()) {
                 Village village = villagesMap.get(clusterId);
                 village.ironGolems.add(ironGolem);
@@ -97,7 +79,7 @@ public class VillageInfo {
         });
 
         // Count cats
-        List<Cat> lostCats = fetchEntities(world, aggregator, Cat.class, (clusterId, cat) -> {
+        List<Cat> lostCats = aggregator.fetchEntities(Cat.class, (clusterId, cat) -> {
             if(!cat.isLeashed()) {
                 Village village = villagesMap.get(clusterId);
                 village.cats.add(cat);
@@ -117,7 +99,7 @@ public class VillageInfo {
         }
 
         for (Map.Entry<Integer,Village> entry : villagesMap.entrySet()) {
-            final int clusterId = entry.getKey();
+            //final int clusterId = entry.getKey();
             final Village village = entry.getValue();
 
             if(village.villagers.size() > village.bedHeads.size()) {
