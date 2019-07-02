@@ -1,5 +1,6 @@
 package com.gmail.uprial.customvillage.info;
 
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -34,7 +35,9 @@ class ClusterAggregator {
     private final int searchDepth;
 
     private RegionCluster regionCluster = new RegionCluster();
-    private ClusterRegion clusterRegion = new ClusterRegion();
+    private final ClusterRegion clusterRegion = new ClusterRegion();
+
+    private static final String KEY_DELIMITER = ":";
 
     ClusterAggregator(final World world, final Vector scale, final int searchDepth) {
         this.world = world;
@@ -121,6 +124,49 @@ class ClusterAggregator {
                 }
             }
         }
+    }
+
+    Map<String, String> getDump() {
+        Map<String, String> map = new HashMap<>();
+        String[] keyParts = new String[3];
+        for (Map.Entry<Vector, Integer> entry : regionCluster.entrySet()) {
+            Vector vector = entry.getKey();
+            Integer clusterId = entry.getValue();
+
+            keyParts[0] = String.valueOf(vector.getBlockX());
+            keyParts[1] = String.valueOf(vector.getBlockY());
+            keyParts[2] = String.valueOf(vector.getBlockZ());
+            map.put(StringUtils.join(keyParts, KEY_DELIMITER), clusterId.toString());
+        }
+
+        return map;
+    }
+
+    void loadFromDump(Map<String, String> map) {
+        final RegionCluster newRegionCluster = new RegionCluster();
+
+        for (Map.Entry<String,String> entry : map.entrySet()) {
+            String key = entry.getKey();
+
+            String[] items = StringUtils.split(key, KEY_DELIMITER);
+            if(items.length != 3) {
+                throw new VillageInfoError(String.format("Can't load from dump: key '%s' is invalid", key));
+            }
+
+            Vector vector;
+            try {
+                vector = new Vector(Integer.valueOf(items[0]),
+                        Integer.valueOf(items[1]),
+                        Integer.valueOf(items[2]));
+            } catch (NumberFormatException e) {
+                throw new VillageInfoError(String.format("Can't load from dump: %s", e.toString()));
+            }
+
+            Integer clusterId = Integer.valueOf(entry.getValue());
+            newRegionCluster.put(vector, clusterId);
+        }
+        regionCluster = newRegionCluster;
+        calculateClusterRegion();
     }
 
     // ==== PRIVATE METHODS ====

@@ -30,7 +30,7 @@ class CustomVillageCommandExecutor implements CommandExecutor {
             }
             else if((args.length >= 1) && (args[0].equalsIgnoreCase("info"))) {
                 if (sender.hasPermission(COMMAND_NS + ".info")) {
-                    customLogger.info("\n" + StringUtils.join(plugin.getVillageInfo().getTextLines(), "\n"));
+                    customLogger.info("\n" + StringUtils.join(plugin.getVillageInfoTextLines(), "\n"));
                     return true;
                 }
             }

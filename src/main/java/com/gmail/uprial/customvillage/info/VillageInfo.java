@@ -2,6 +2,7 @@ package com.gmail.uprial.customvillage.info;
 
 import com.gmail.uprial.customvillage.CustomVillage;
 import com.gmail.uprial.customvillage.common.CustomLogger;
+import com.gmail.uprial.customvillage.storage.CustomStorage;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -12,6 +13,7 @@ import org.bukkit.entity.Villager;
 import org.bukkit.util.Vector;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.gmail.uprial.customvillage.common.Formatter.format;
 
@@ -24,6 +26,9 @@ public class VillageInfo {
 
         Village() {
         }
+    }
+    public interface Func {
+        void call();
     }
 
     private static final int PLAIN_MAP_SCALE = 8;
@@ -38,28 +43,58 @@ public class VillageInfo {
     private final CustomVillage plugin;
     private final CustomLogger customLogger;
 
-    public VillageInfo(CustomVillage plugin,CustomLogger customLogger) {
+    private final Map<World,ClusterAggregator> aggregators = new HashMap<>();
+
+    public VillageInfo(CustomVillage plugin, CustomLogger customLogger) {
         this.plugin = plugin;
         this.customLogger = customLogger;
     }
 
-    private Map<Integer,Village> getVillagesMap(World world) {
-        long startTime = 0;
-        if(customLogger.isDebugMode()) {
-            startTime = System.currentTimeMillis();
+    public void save() {
+        measureTime(() -> {
+            for (World world : plugin.getServer().getWorlds()) {
+                getStorage(world).save(getOrCreateAggregator(world).getDump());
+            }
+        }, (time) -> customLogger.debug(String.format("Village info has been saved in %dms.", time)));
+    }
+
+    public void update() {
+        measureTime(() -> {
+            for (World world : plugin.getServer().getWorlds()) {
+                getVillages(world);
+            }
+        }, (time) -> customLogger.debug(String.format("Village info has been updated in %dms.", time)));
+    }
+
+    private CustomStorage getStorage(World world) {
+        String filename = String.format("%s_villages.txt", world.getName());
+        return new CustomStorage(plugin.getDataFolder(), filename, customLogger);
+    }
+
+    private ClusterAggregator getOrCreateAggregator(World world) {
+        ClusterAggregator aggregator = aggregators.get(world);
+        if(aggregator == null) {
+            aggregator = new ClusterAggregator(world, CLUSTER_SCALE, CLUSTER_SEARCH_DEPTH);
+            aggregators.put(world, aggregator);
+
+            aggregator.loadFromDump(getStorage(world).load());
         }
 
+        return aggregator;
+    }
+
+    private Map<Integer,Village> getVillages(World world) {
         // Populate an aggregator
-        final ClusterAggregator aggregator = new ClusterAggregator(world, CLUSTER_SCALE, CLUSTER_SEARCH_DEPTH);
+        final ClusterAggregator aggregator = getOrCreateAggregator(world);
         aggregator.populate(world.getEntitiesByClass(Villager.class));
 
         // Populate villagesMap
         Map<Integer,Village> villagesMap = new HashMap<>();
-        for (Integer clusterId : aggregator.getAllClusterIds()) {
+        for (Integer villageId : aggregator.getAllClusterIds()) {
             final Village village = new Village();
-            villagesMap.put(clusterId, village);
+            villagesMap.put(villageId, village);
 
-            aggregator.fetchBlocksInCluster(clusterId, (Block block) -> {
+            aggregator.fetchBlocksInCluster(villageId, (Block block) -> {
                 if(block.getBlockData() instanceof org.bukkit.block.data.type.Bed) {
                     org.bukkit.block.data.type.Bed bed = (org.bukkit.block.data.type.Bed)block.getBlockData();
                     if(bed.getPart() == Bed.Part.HEAD) {
@@ -70,31 +105,26 @@ public class VillageInfo {
         }
 
         // Count villagers
-        List<Villager> lostVillagers = aggregator.fetchEntities(Villager.class, (clusterId, villager) -> {
-            Village village = villagesMap.get(clusterId);
+        List<Villager> lostVillagers = aggregator.fetchEntities(Villager.class, (villageId, villager) -> {
+            Village village = villagesMap.get(villageId);
             village.villagers.add(villager);
         });
 
         // Count ironGolems
-        List<IronGolem> lostIronGolems = aggregator.fetchEntities(IronGolem.class, (clusterId, ironGolem) -> {
+        List<IronGolem> lostIronGolems = aggregator.fetchEntities(IronGolem.class, (villageId, ironGolem) -> {
             if(!ironGolem.isPlayerCreated()) {
-                Village village = villagesMap.get(clusterId);
+                Village village = villagesMap.get(villageId);
                 village.ironGolems.add(ironGolem);
             }
         });
 
         // Count cats
-        List<Cat> lostCats = aggregator.fetchEntities(Cat.class, (clusterId, cat) -> {
+        List<Cat> lostCats = aggregator.fetchEntities(Cat.class, (villageId, cat) -> {
             if(!cat.isLeashed()) {
-                Village village = villagesMap.get(clusterId);
+                Village village = villagesMap.get(villageId);
                 village.cats.add(cat);
             }
         });
-
-        if(customLogger.isDebugMode()) {
-            long endTime = System.currentTimeMillis();
-            customLogger.debug(String.format("Village info has been gathered in %dms.", (endTime - startTime)));
-        }
 
         for (Villager villager : lostVillagers) {
             customLogger.warning(String.format("Something went completely wrong and we lost a %s", format(villager)));
@@ -109,7 +139,7 @@ public class VillageInfo {
         }
 
         for (Map.Entry<Integer,Village> entry : villagesMap.entrySet()) {
-            //final int clusterId = entry.getKey();
+            //final int villageId = entry.getKey();
             final Village village = entry.getValue();
 
             if(village.villagers.size() > village.bedHeads.size()) {
@@ -142,12 +172,12 @@ public class VillageInfo {
                 lines.add(String.format("==== World '%s' ====", world.getName()));
                 lines.addAll(viewer.getTextLines());
 
-                Map<Integer,Village> villagesMap = getVillagesMap(world);
-                for (Map.Entry<Integer,Village> entry : villagesMap.entrySet()) {
-                    final Integer clusterId = entry.getKey();
+                Map<Integer,Village> villages = getVillages(world);
+                for (Map.Entry<Integer,Village> entry : villages.entrySet()) {
+                    final Integer villageId = entry.getKey();
                     final Village village = entry.getValue();
 
-                    lines.add(String.format("== World '%s', village #%d ==", world.getName(), clusterId));
+                    lines.add(String.format("== World '%s', village #%d ==", world.getName(), villageId));
                     lines.add(String.format("  Villagers: %d", village.villagers.size()));
                     lines.add(String.format("  Iron Golems: %d", village.ironGolems.size()));
                     lines.add(String.format("  Cats: %d", village.cats.size()));
@@ -164,5 +194,17 @@ public class VillageInfo {
         }
 
         return lines;
+    }
+
+    private void measureTime(Func func, Consumer<Long> consumer) {
+        long startTime = 0;
+        if(customLogger.isDebugMode()) {
+            startTime = System.currentTimeMillis();
+        }
+        func.call();
+        if(customLogger.isDebugMode()) {
+            long endTime = System.currentTimeMillis();
+            consumer.accept(endTime - startTime);
+        }
     }
 }

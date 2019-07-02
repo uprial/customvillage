@@ -7,8 +7,10 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
+import java.util.List;
 
 import static com.gmail.uprial.customvillage.CustomVillageCommandExecutor.COMMAND_NS;
 
@@ -19,7 +21,10 @@ public final class CustomVillage extends JavaPlugin {
     private CustomLogger consoleLogger = null;
     private CustomVillageConfig customVillageConfig = null;
 
-    //private BukkitTask playerTrackerTask;
+    private VillageInfo villageInfo = null;
+
+    private BukkitTask taskPeriodicSave;
+    private BukkitTask taskPeriodicUpdate;
 
     @Override
     public void onEnable() {
@@ -28,7 +33,10 @@ public final class CustomVillage extends JavaPlugin {
         consoleLogger = new CustomLogger(getLogger());
         customVillageConfig = loadConfig(getConfig(), consoleLogger);
 
-        //playerTrackerTask = new CustomVillagePlayerTracker(this).runTaskTimer();
+        villageInfo = new VillageInfo(this, consoleLogger);
+
+        taskPeriodicSave = new TaskPeriodicSave(this).runTaskTimer();
+        taskPeriodicUpdate = new TaskPeriodicUpdate(this).runTaskTimer();
         //getServer().getPluginManager().registerEvents(new CustomVillageAttackEventListener(this, consoleLogger), this);
 
         getCommand(COMMAND_NS).setExecutor(new CustomVillageCommandExecutor(this));
@@ -47,7 +55,12 @@ public final class CustomVillage extends JavaPlugin {
     @Override
     public void onDisable() {
         HandlerList.unregisterAll(this);
-        //playerTrackerTask.cancel();
+
+        taskPeriodicUpdate.cancel();
+        taskPeriodicSave.cancel();
+
+        saveInfo();
+
         consoleLogger.info("Plugin disabled");
     }
 
@@ -63,8 +76,16 @@ public final class CustomVillage extends JavaPlugin {
         return YamlConfiguration.loadConfiguration(configFile);
     }
 
-    public VillageInfo getVillageInfo() {
-        return new VillageInfo(this, consoleLogger);
+    public List<String> getVillageInfoTextLines() {
+        return villageInfo.getTextLines();
+    }
+
+    public void saveInfo() {
+        villageInfo.save();
+    }
+
+    public void updateInfo() {
+        villageInfo.update();
     }
 
     static CustomVillageConfig loadConfig(FileConfiguration config, CustomLogger customLogger) {
