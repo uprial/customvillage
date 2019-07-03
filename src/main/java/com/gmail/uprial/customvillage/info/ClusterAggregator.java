@@ -257,8 +257,8 @@ class ClusterAggregator {
     private boolean isRegionLoaded(Vector vector) {
         final int x = vector.getBlockX() * scale.getBlockX();
         final int z = vector.getBlockZ() * scale.getBlockZ();
-        return world.isChunkLoaded(x, z)
-                && world.isChunkLoaded(x + scale.getBlockX() - 1, z + scale.getBlockZ() - 1);
+        return world.isChunkLoaded(x >> 4, z >> 4)
+                && world.isChunkLoaded((x + scale.getBlockX() - 1) >> 4, (z + scale.getBlockZ() - 1) >> 4);
     }
 
     private Vector getNormalizedVector(Vector vector) {
