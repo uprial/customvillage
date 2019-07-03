@@ -67,14 +67,10 @@ class ClusterAggregator {
         return clusterRegion.keySet();
     }
 
-    Integer getClusterId(Vector vector) {
-        return regionCluster.get(getNormalizedVector(vector));
-    }
-
     <T extends Entity> List<T> fetchEntities(Class<T> tClass, BiConsumer<Integer,T> consumer) {
         List<T> lostEntities = new ArrayList<>();
         for (T entity : world.getEntitiesByClass(tClass)) {
-            Integer clusterId = getClusterId(entity.getLocation().toVector());
+            final Integer clusterId = regionCluster.get(getNormalizedVector(entity.getLocation().toVector()));
             if(clusterId != null) {
                 consumer.accept(clusterId, entity);
             } else {
