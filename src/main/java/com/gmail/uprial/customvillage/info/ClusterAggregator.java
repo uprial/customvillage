@@ -172,7 +172,9 @@ class ClusterAggregator {
     // ==== PRIVATE METHODS ====
 
     private void optimize(PopulationMap populationMap) {
-        int unloadedClusterIdCounter = 0;
+        // ClusterId is an auto-increment value, so we need to calculate the max existing id.
+        int maxInitialClusterId = 0;
+        // Some regions aren't loaded, so we need to keep them in the database though there are no entities loaded there.
         final RegionCluster unloadedRegionCluster = new RegionCluster();
         for (final Map.Entry<Vector, Integer> entry : regionCluster.entrySet()) {
             final Vector vector = entry.getKey();
@@ -180,25 +182,36 @@ class ClusterAggregator {
 
             if (!isRegionLoaded(vector)) {
                 unloadedRegionCluster.put(vector, clusterId);
-                unloadedClusterIdCounter = Math.max(unloadedClusterIdCounter, clusterId);
             }
+            maxInitialClusterId = Math.max(maxInitialClusterId, clusterId);
         }
+        // In order to keep the stable ClusterId distribution, we need to keep the original ids when it's possible.
+        final RegionCluster origRegionCluster = new RegionCluster(regionCluster);
 
         boolean isFixed = false;
         while (!isFixed) {
-            int clusterIdCounter = unloadedClusterIdCounter;
+            int clusterIdCounter = maxInitialClusterId + 1;
+            // Start from the unloaded regions.
             final RegionCluster newRegionCluster = new RegionCluster(unloadedRegionCluster);
 
             for (final Map.Entry<Vector, Population> entry : populationMap.entrySet()) {
                 final Population population = entry.getValue();
 
+                // If there are some entities...
                 if (!population.isEmpty()) {
                     final Vector vector = entry.getKey();
 
-                    Integer newClusterId = findNearClusterId(newRegionCluster, vector);
-                    if (newClusterId == null) {
-                        clusterIdCounter++;
-                        newClusterId = clusterIdCounter;
+                    // Try to find the original ClusterId. Assume that origRegionCluster is always optimized and does not to be simplified.
+                    Integer newClusterId = origRegionCluster.get(vector);
+
+                    if(newClusterId == null) {
+                        // Try to find the nearest cluster.
+                        newClusterId = findNearClusterId(newRegionCluster, vector);
+
+                        if (newClusterId == null) {
+                            newClusterId = clusterIdCounter;
+                            clusterIdCounter++;
+                        }
                     }
 
                     newRegionCluster.put(vector, newClusterId);
