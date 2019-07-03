@@ -82,12 +82,12 @@ class ClusterAggregator {
     }
 
     void fetchBlocksInCluster(int clusterId, Consumer<Block> consumer) {
-        Region region = clusterRegion.get(clusterId);
+        final Region region = clusterRegion.get(clusterId);
         if(region == null) {
             throw new VillageInfoError(String.format("Cluster #%d not found.", clusterId));
         }
 
-        Set<Vector> nearRegion = new HashSet<>();
+        final Set<Vector> nearRegion = new HashSet<>();
         for (Vector vector : region) {
             final int x1 = vector.getBlockX() - searchDepth;
             final int x2 = vector.getBlockX() + searchDepth;
@@ -123,11 +123,11 @@ class ClusterAggregator {
     }
 
     Map<String, String> getDump() {
-        Map<String, String> map = new HashMap<>();
-        String[] keyParts = new String[3];
+        final Map<String, String> map = new HashMap<>();
+        final String[] keyParts = new String[3];
         for (Map.Entry<Vector, Integer> entry : regionCluster.entrySet()) {
-            Vector vector = entry.getKey();
-            Integer clusterId = entry.getValue();
+            final Vector vector = entry.getKey();
+            final Integer clusterId = entry.getValue();
 
             keyParts[0] = String.valueOf(vector.getBlockX());
             keyParts[1] = String.valueOf(vector.getBlockY());
@@ -142,14 +142,14 @@ class ClusterAggregator {
         final RegionCluster newRegionCluster = new RegionCluster();
 
         for (Map.Entry<String,String> entry : map.entrySet()) {
-            String key = entry.getKey();
+            final String key = entry.getKey();
 
-            String[] items = StringUtils.split(key, KEY_DELIMITER);
+            final String[] items = StringUtils.split(key, KEY_DELIMITER);
             if(items.length != 3) {
                 throw new VillageInfoError(String.format("Can't load from dump: key '%s' is invalid", key));
             }
 
-            Vector vector;
+            final Vector vector;
             try {
                 vector = new Vector(Integer.valueOf(items[0]),
                         Integer.valueOf(items[1]),
@@ -158,7 +158,7 @@ class ClusterAggregator {
                 throw new VillageInfoError(String.format("Can't load from dump: %s", e.toString()));
             }
 
-            Integer clusterId = Integer.valueOf(entry.getValue());
+            final Integer clusterId = Integer.valueOf(entry.getValue());
             newRegionCluster.put(vector, clusterId);
         }
         regionCluster = newRegionCluster;
@@ -226,8 +226,8 @@ class ClusterAggregator {
     private void calculateClusterRegion() {
         clusterRegion.clear();
         for (Map.Entry<Vector, Integer> entry : regionCluster.entrySet()) {
-            Vector vector = entry.getKey();
-            Integer clusterId = entry.getValue();
+            final Vector vector = entry.getKey();
+            final Integer clusterId = entry.getValue();
 
             Region region = clusterRegion.get(vector);
             if (region == null) {
