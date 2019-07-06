@@ -63,7 +63,7 @@ public class VillageInfo {
        add(EntityType.CAT);
     }};
 
-    public boolean isEntityLimited(Entity entity) {
+    public boolean isEntityLimited(final Entity entity) {
         if(interestingEntityTypes.contains(entity.getType())) {
             final ClusterAggregator aggregator = getOrCreateAggregator(entity.getWorld());
             final Integer villageId = aggregator.getEntityClusterId(entity);
@@ -86,7 +86,7 @@ public class VillageInfo {
         return false;
     }
 
-    public void onBlockChange(Block block) {
+    public void onBlockChange(final Block block) {
         if(block.getBlockData() instanceof org.bukkit.block.data.type.Bed) {
             if(customLogger.isDebugMode()) {
                 customLogger.debug(String.format("Block %s has been changed", format(block)));
@@ -96,7 +96,7 @@ public class VillageInfo {
         }
     }
 
-    private void forEachWorld(Consumer<World> consumer, String whatHasBeenDone) {
+    private void forEachWorld(final Consumer<World> consumer, final String whatHasBeenDone) {
         measureTime(() -> {
             for (World world : plugin.getServer().getWorlds()) {
                 consumer.accept(world);
@@ -105,12 +105,12 @@ public class VillageInfo {
         }, (time) -> customLogger.debug(String.format("%s in %dms.", whatHasBeenDone, time)));
     }
 
-    private CustomStorage getStorage(World world) {
+    private CustomStorage getStorage(final World world) {
         final String filename = String.format("%s_villages.txt", world.getName());
         return new CustomStorage(plugin.getDataFolder(), filename, customLogger);
     }
 
-    private ClusterAggregator getOrCreateAggregator(World world) {
+    private ClusterAggregator getOrCreateAggregator(final World world) {
         ClusterAggregator aggregator = aggregators.get(world);
         if(aggregator == null) {
             aggregator = new ClusterAggregator(world, CLUSTER_SCALE, CLUSTER_SEARCH_DEPTH);
@@ -122,7 +122,7 @@ public class VillageInfo {
         return aggregator;
     }
 
-    private Villages getOrCreateVillages(World world) {
+    private Villages getOrCreateVillages(final World world) {
         Villages villages = worldVillages.get(world);
         if (villages == null) {
             villages = new Villages();
@@ -132,7 +132,7 @@ public class VillageInfo {
         return villages;
     }
 
-    private Villages getVillages(World world) {
+    private Villages getVillages(final World world) {
         // Populate an aggregator
         final ClusterAggregator aggregator = getOrCreateAggregator(world);
         aggregator.populate(world.getEntitiesByClass(Villager.class));
@@ -204,25 +204,28 @@ public class VillageInfo {
         return removed;
     }
 
-    private <T extends Entity> int removeEntities(List<T> entities) {
+    private <T extends Entity> int removeEntities(final List<T> entities, final String title) {
         int removed = 0;
-        for (final T entity : entities) {
-            customLogger.debug(String.format("Removing a lost %s", format(entity)));
-            entity.remove();
-            removed++;
+        if(!entities.isEmpty()) {
+            customLogger.info(String.format("The lost %d %s(s) will be removed", entities.size(), title));
+            for (final T entity : entities) {
+                customLogger.debug(String.format("Removing a lost %s", format(entity)));
+                entity.remove();
+                removed++;
+            }
         }
 
         return removed;
     }
 
-    private void optimizeWorld(World world) {
+    private void optimizeWorld(final World world) {
         int tries = 3;
         while ((tries > 0) && (optimizeWorldOnce(world) > 0)) {
             tries--;
         }
     }
 
-    private int optimizeWorldOnce(World world) {
+    private int optimizeWorldOnce(final World world) {
         int removed = 0;
 
         final ClusterAggregator aggregator = getOrCreateAggregator(world);
@@ -233,8 +236,8 @@ public class VillageInfo {
             customLogger.warning(String.format("Something went completely wrong and we lost a %s", format(villager)));
         }
 
-        removed += removeEntities(lostVillage.getIronGolems());
-        removed += removeEntities(lostVillage.getCats());
+        removed += removeEntities(lostVillage.getIronGolems(), "iron golem");
+        removed += removeEntities(lostVillage.getCats(), "cat");
 
         for (final Map.Entry<Integer, Village> entry : villages.entrySet()) {
             final Integer villageId = entry.getKey();
@@ -320,7 +323,7 @@ public class VillageInfo {
         }, (time) -> customLogger.debug(String.format("Village info has been gathered in %dms.", time)));
     }
 
-    private <T extends Entity> List<String> getViewTextLines(Collection<T> entities) {
+    private <T extends Entity> List<String> getViewTextLines(final Collection<T> entities) {
         final PlainMapViewer viewer = new PlainMapViewer(PLAIN_MAP_SCALE);
         for (final Entity entity : entities) {
             final Location location = entity.getLocation();
@@ -329,7 +332,7 @@ public class VillageInfo {
         return viewer.getTextLines();
     }
 
-    private <T> T measureTime(Func<T> func, Consumer<Long> consumer) {
+    private <T> T measureTime(final Func<T> func, final Consumer<Long> consumer) {
         long startTime = 0;
         if(customLogger.isDebugMode()) {
             startTime = System.currentTimeMillis();

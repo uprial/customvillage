@@ -64,7 +64,7 @@ class ClusterAggregator {
     }
 
     <T extends Entity> List<T> fetchEntities(final Class<T> tClass, final BiConsumer<Integer,T> consumer) {
-        List<T> lostEntities = new ArrayList<>();
+        final List<T> lostEntities = new ArrayList<>();
         for (final T entity : world.getEntitiesByClass(tClass)) {
             final Integer clusterId = regionCluster.get(getRegion(entity.getLocation().toVector()));
             if(clusterId != null) {
@@ -98,7 +98,7 @@ class ClusterAggregator {
     }
 
     StorageData getDump() {
-        Comparator<Vector> comparator = (Vector v1, Vector v2) -> {
+        final Comparator<Vector> comparator = (Vector v1, Vector v2) -> {
             if(v1.getBlockX() < v2.getBlockX()) {
                 return -1;
             } else if(v1.getBlockX() > v2.getBlockX()) {
@@ -126,7 +126,7 @@ class ClusterAggregator {
         return data;
     }
 
-    void loadFromDump(StorageData data) {
+    void loadFromDump(final StorageData data) {
         final RegionCluster newRegionCluster = new RegionCluster();
 
         for (final Map.Entry<String,String> entry : data.entrySet()) {
@@ -153,7 +153,7 @@ class ClusterAggregator {
         calculateClusterArea();
     }
 
-    boolean isFullyLoaded(int clusterId) {
+    boolean isFullyLoaded(final int clusterId) {
         final Area area = getArea(clusterId);
         for(Vector region : area) {
             if(!isRegionLoaded(region)) {
@@ -196,7 +196,7 @@ class ClusterAggregator {
         return blocks;
     }
 
-    private Area getArea(int clusterId) {
+    private Area getArea(final int clusterId) {
         final Area area = clusterArea.get(clusterId);
         if (area == null) {
             throw new VillageInfoError(String.format("Cluster #%d not found.", clusterId));
@@ -205,7 +205,7 @@ class ClusterAggregator {
         return area;
     }
 
-    void populate(PopulationMap populationMap) {
+    void populate(final PopulationMap populationMap) {
         // Some regions aren't loaded, so we need to keep them in the database though there are no entities loaded there.
         // ClusterId is an auto-increment value, so we need to calculate the max existing id.
         int unloadedMaxClusterId = 0;
@@ -263,13 +263,13 @@ class ClusterAggregator {
             final Vector region = entry.getKey();
             final Integer clusterId = entry.getValue();
 
-            Area area = clusterArea.computeIfAbsent(clusterId, k -> new Area());
+            final Area area = clusterArea.computeIfAbsent(clusterId, k -> new Area());
             area.add(region);
         }
     }
 
     private Integer findNearClusterId(RegionCluster regionCluster, Vector region) {
-        AtomicInteger minNearClusterId = new AtomicInteger(-1);
+        final AtomicInteger minNearClusterId = new AtomicInteger(-1);
         fetchNearRegions(region, (nearRegion) -> {
             if (!nearRegion.equals(region)) {
                 final Integer nearClusterId = regionCluster.get(nearRegion);
@@ -290,7 +290,7 @@ class ClusterAggregator {
         }
     }
 
-    private void fetchNearRegions(Vector region, Consumer<Vector> consumer) {
+    private void fetchNearRegions(final Vector region, final Consumer<Vector> consumer) {
         final int x1 = region.getBlockX() - searchDepth;
         final int x2 = region.getBlockX() + searchDepth;
         final int y1 = region.getBlockY() - searchDepth;
@@ -307,18 +307,18 @@ class ClusterAggregator {
         }
     }
 
-    boolean isRegionLoaded(Vector region) {
+    boolean isRegionLoaded(final Vector region) {
         final int x = region.getBlockX() * scale.getBlockX();
         final int z = region.getBlockZ() * scale.getBlockZ();
         return isBlockLoaded(x, z)
                 && isBlockLoaded(x + scale.getBlockX() - 1, z + scale.getBlockZ() - 1);
     }
 
-    boolean isBlockLoaded(int x, int z) {
+    boolean isBlockLoaded(final int x, final int z) {
         return world.isChunkLoaded(x >> 4, z >> 4);
     }
 
-    Vector getRegion(Vector vector) {
+    Vector getRegion(final Vector vector) {
         return new Vector(
                 vector.getBlockX() / scale.getBlockX(),
                 vector.getBlockY() / scale.getBlockY(),
