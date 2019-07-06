@@ -150,20 +150,18 @@ class ClusterAggregator {
         // Some regions aren't loaded, so we need to keep them in the database though there are no entities loaded there.
         // ClusterId is an auto-increment value, so we need to calculate the max existing id.
         int unloadedMaxClusterId = 0;
-        final RegionCluster unloadedRegionCluster = new RegionCluster();
+        final RegionCluster newRegionCluster = new RegionCluster();
         for (final Map.Entry<Vector, Integer> entry : regionCluster.entrySet()) {
             final Vector region = entry.getKey();
             final int clusterId = entry.getValue();
 
             if (!isRegionLoaded(region)) {
-                unloadedRegionCluster.put(region, clusterId);
+                newRegionCluster.put(region, clusterId);
                 unloadedMaxClusterId = Math.max(unloadedMaxClusterId, clusterId);
             }
         }
         // In order to keep the stable ClusterId distribution, we need to keep the original ids when it's possible.
         final RegionCluster origRegionCluster = new RegionCluster(regionCluster);
-        // Start from the unloadedRegionCluster.
-        final RegionCluster newRegionCluster = new RegionCluster(unloadedRegionCluster);
         boolean isFixed = false;
         while (!isFixed) {
             // Start from the unloadedMaxClusterId.
@@ -189,7 +187,7 @@ class ClusterAggregator {
             if (newRegionCluster.equals(regionCluster)) {
                 isFixed = true;
             }
-            regionCluster = newRegionCluster;
+            regionCluster = new RegionCluster(newRegionCluster);
         }
 
         calculateClusterArea();

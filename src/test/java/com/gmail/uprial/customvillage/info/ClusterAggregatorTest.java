@@ -105,7 +105,7 @@ public class ClusterAggregatorTest {
     }
 
     @Test
-    public void testSeveralGroupIterations() throws Exception {
+    public void testTwoGroupIterations() throws Exception {
         aggregator.populate(new PopulationMap() {{
             add(new Vector(1, 1, 1));
             add(new Vector(4, 1, 1));
@@ -113,6 +113,19 @@ public class ClusterAggregatorTest {
             add(new Vector(3, 1, 1));
         }});
         assertEquals("{1:1:1=1, 4:1:1=1, 3:1:1=1, 2:1:1=1}", aggregator.getDump().toString());
+    }
+
+    @Test
+    public void testThreeGroupIterations() throws Exception {
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(1, 1, 1));
+            add(new Vector(6, 1, 1));
+            add(new Vector(2, 1, 1));
+            add(new Vector(5, 1, 1));
+            add(new Vector(3, 1, 1));
+            add(new Vector(4, 1, 1));
+        }});
+        assertEquals("{6:1:1=1, 1:1:1=1, 4:1:1=1, 5:1:1=1, 3:1:1=1, 2:1:1=1}", aggregator.getDump().toString());
     }
 
     @Test
@@ -184,5 +197,21 @@ public class ClusterAggregatorTest {
             add(new Vector(1, 1, 3));
         }});
         assertEquals("{1:1:1=3, 1:1:-1=3, 1:1:0=3, 3:3:3=1, 1:1:3=3, 1:1:2=3}", aggregator.getDump().toString());
+    }
+
+    @Test
+    public void testStableMergeWithLowerId() throws Exception {
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(1, 1, 1));
+            add(new Vector(4, 4, 4));
+            add(new Vector(6, 6, 6));
+        }});
+        assertEquals("{1:1:1=2, 6:6:6=1, 4:4:4=3}", aggregator.getDump().toString());
+
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(1, 1, 1));
+            add(new Vector(4, 4, 4));
+        }});
+        assertEquals("{1:1:1=2, 4:4:4=3}", aggregator.getDump().toString());
     }
 }
