@@ -4,7 +4,6 @@ import com.gmail.uprial.customvillage.common.CustomLogger;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.*;
-import java.util.*;
 import java.util.Map.Entry;
 
 public class CustomStorage {
@@ -20,7 +19,7 @@ public class CustomStorage {
         this.customLogger = customLogger;
     }
 
-    public void save(Map<String,String> data) {
+    public void save(StorageData data) {
         if(!dataFolder.exists()) {
             //noinspection ResultOfMethodCallIgnored
             dataFolder.mkdir();
@@ -33,7 +32,7 @@ public class CustomStorage {
         }
     }
 
-    public Map<String,String> load() {
+    public StorageData load() {
         File file = new File(getFileName());
         if(file.exists()) {
             try {
@@ -43,10 +42,10 @@ public class CustomStorage {
             }
         }
 
-        return new HashMap<>();
+        return new StorageData();
     }
 
-    private void saveData(Map<String,String> data) throws IOException {
+    private void saveData(StorageData data) throws IOException {
         FileWriter fileWriter = new FileWriter(getFileName());
         BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
 
@@ -62,8 +61,8 @@ public class CustomStorage {
         bufferedWriter.close();
     }
 
-    private Map<String,String> loadData() throws IOException {
-        final Map<String,String> data = new HashMap<>();
+    private StorageData loadData() throws IOException {
+        final StorageData data = new StorageData();
 
         FileReader fileReader = new FileReader(getFileName());
         BufferedReader bufferedReader = new BufferedReader(fileReader);

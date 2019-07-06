@@ -51,9 +51,12 @@ class PlainMapViewer {
         }
     }
 
+    private class PlainVectorMap extends HashMap<PlainVector,Integer> {
+    }
+
     private final int scale;
 
-    private final Map<PlainVector,Integer> map = new HashMap<>();
+    private final PlainVectorMap map = new PlainVectorMap();
 
     PlainMapViewer(final int scale) {
         this.scale = scale;

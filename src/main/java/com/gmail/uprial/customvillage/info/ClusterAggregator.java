@@ -1,5 +1,6 @@
 package com.gmail.uprial.customvillage.info;
 
+import com.gmail.uprial.customvillage.storage.StorageData;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -122,8 +123,8 @@ class ClusterAggregator {
         }
     }
 
-    Map<String, String> getDump() {
-        final Map<String, String> map = new HashMap<>();
+    StorageData getDump() {
+        final StorageData data = new StorageData();
         final String[] keyParts = new String[3];
         for (Map.Entry<Vector, Integer> entry : regionCluster.entrySet()) {
             final Vector vector = entry.getKey();
@@ -132,16 +133,16 @@ class ClusterAggregator {
             keyParts[0] = String.valueOf(vector.getBlockX());
             keyParts[1] = String.valueOf(vector.getBlockY());
             keyParts[2] = String.valueOf(vector.getBlockZ());
-            map.put(StringUtils.join(keyParts, KEY_DELIMITER), clusterId.toString());
+            data.put(StringUtils.join(keyParts, KEY_DELIMITER), clusterId.toString());
         }
 
-        return map;
+        return data;
     }
 
-    void loadFromDump(Map<String, String> map) {
+    void loadFromDump(StorageData data) {
         final RegionCluster newRegionCluster = new RegionCluster();
 
-        for (Map.Entry<String,String> entry : map.entrySet()) {
+        for (Map.Entry<String,String> entry : data.entrySet()) {
             final String key = entry.getKey();
 
             final String[] items = StringUtils.split(key, KEY_DELIMITER);
