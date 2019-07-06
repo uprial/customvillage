@@ -17,12 +17,28 @@ class Village {
     // https://minecraft.gamepedia.com/Iron_Golem
     private static final int VILLAGERS_PER_GOLEM = 4 * 2;
 
-    final List<Villager> villagers = new ArrayList<>();
-    final List<IronGolem> ironGolems = new ArrayList<>();
-    final List<Cat> cats = new ArrayList<>();
-    final List<Block> bedHeads = new ArrayList<>();
+    private final List<Villager> villagers = new ArrayList<>();
+    private final List<IronGolem> ironGolems = new ArrayList<>();
+    private final List<Cat> cats = new ArrayList<>();
+    private final List<Block> bedHeads = new ArrayList<>();
 
     Village() {
+    }
+
+    List<Villager> getVillagers() {
+        return villagers;
+    }
+
+    List<IronGolem> getIronGolems() {
+        return ironGolems;
+    }
+
+    List<Cat> getCats() {
+        return cats;
+    }
+
+    List<Block> getBedHeads() {
+        return bedHeads;
     }
 
     int getVillagersLimit() {

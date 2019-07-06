@@ -74,11 +74,11 @@ public class VillageInfo {
             } else {
                 final Village village = getOrCreateVillages(entity.getWorld()).get(villageId);
                 if(entity.getType().equals(EntityType.VILLAGER)) {
-                    return village.villagers.size() >= village.getVillagersLimit();
+                    return village.getVillagers().size() >= village.getVillagersLimit();
                 } else if(entity.getType().equals(EntityType.IRON_GOLEM)) {
-                    return village.ironGolems.size() >= village.getIronGolemsLimit();
+                    return village.getIronGolems().size() >= village.getIronGolemsLimit();
                 } else if(entity.getType().equals(EntityType.CAT)) {
-                    return village.cats.size() >= village.getCatsLimit();
+                    return village.getCats().size() >= village.getCatsLimit();
                 }
             }
         }
@@ -144,7 +144,7 @@ public class VillageInfo {
             final Village village = new Village();
             villages.put(villageId, village);
 
-            village.bedHeads.addAll(aggregator.getBlocksInCluster(villageId, (Block block) -> {
+            village.getBedHeads().addAll(aggregator.getBlocksInCluster(villageId, (Block block) -> {
                 if (block.getBlockData() instanceof org.bukkit.block.data.type.Bed) {
                     final org.bukkit.block.data.type.Bed bed = (org.bukkit.block.data.type.Bed) block.getBlockData();
                     return (bed.getPart() == Bed.Part.HEAD);
@@ -155,24 +155,24 @@ public class VillageInfo {
 
         final Village lostVillage = new Village();
         // Count villagers
-        lostVillage.villagers.addAll(aggregator.fetchEntities(Villager.class, (villageId, villager) -> {
+        lostVillage.getVillagers().addAll(aggregator.fetchEntities(Villager.class, (villageId, villager) -> {
             Village village = villages.get(villageId);
-            village.villagers.add(villager);
+            village.getVillagers().add(villager);
         }));
 
         // Count ironGolems
-        lostVillage.ironGolems.addAll(aggregator.fetchEntities(IronGolem.class, (villageId, ironGolem) -> {
+        lostVillage.getIronGolems().addAll(aggregator.fetchEntities(IronGolem.class, (villageId, ironGolem) -> {
             if (!ironGolem.isPlayerCreated()) {
                 Village village = villages.get(villageId);
-                village.ironGolems.add(ironGolem);
+                village.getIronGolems().add(ironGolem);
             }
         }));
 
         // Count cats
-        lostVillage.cats.addAll(aggregator.fetchEntities(Cat.class, (villageId, cat) -> {
+        lostVillage.getCats().addAll(aggregator.fetchEntities(Cat.class, (villageId, cat) -> {
             if (!cat.isTamed()) {
                 Village village = villages.get(villageId);
-                village.cats.add(cat);
+                village.getCats().add(cat);
             }
         }));
 
@@ -229,12 +229,12 @@ public class VillageInfo {
         final Villages villages = getVillages(world);
         final Village lostVillage = villages.get(LOST_VILLAGE_ID);
 
-        for (final Villager villager : lostVillage.villagers) {
+        for (final Villager villager : lostVillage.getVillagers()) {
             customLogger.warning(String.format("Something went completely wrong and we lost a %s", format(villager)));
         }
 
-        removed += removeEntities(lostVillage.ironGolems);
-        removed += removeEntities(lostVillage.cats);
+        removed += removeEntities(lostVillage.getIronGolems());
+        removed += removeEntities(lostVillage.getCats());
 
         for (final Map.Entry<Integer, Village> entry : villages.entrySet()) {
             final Integer villageId = entry.getKey();
@@ -246,35 +246,35 @@ public class VillageInfo {
                 final Village village = entry.getValue();
 
                 // Optimize villages
-                if (village.villagers.size() > village.getVillagersLimit()) {
+                if (village.getVillagers().size() > village.getVillagersLimit()) {
                     customLogger.info(String.format("Only %d villager(s) in village #%d have beds, the excessive %d villager(s) will be removed",
-                            village.getVillagersLimit(), villageId, village.villagers.size() - village.getVillagersLimit()));
+                            village.getVillagersLimit(), villageId, village.getVillagers().size() - village.getVillagersLimit()));
 
-                    removed += optimizeEntities(village.villagers, village.getVillagersLimit(),
+                    removed += optimizeEntities(village.getVillagers(), village.getVillagersLimit(),
                             (villager) -> !villager.isAdult(), "baby");
-                    removed += optimizeEntities(village.villagers, village.getVillagersLimit(),
+                    removed += optimizeEntities(village.getVillagers(), village.getVillagersLimit(),
                             (villager) -> villager.getProfession().equals(Villager.Profession.NITWIT), "nitwit");
-                    removed += optimizeEntities(village.villagers, village.getVillagersLimit(),
+                    removed += optimizeEntities(village.getVillagers(), village.getVillagersLimit(),
                             (villager) -> villager.getProfession().equals(Villager.Profession.NONE), "unemployed");
-                    removed += optimizeEntities(village.villagers, village.getVillagersLimit(),
+                    removed += optimizeEntities(village.getVillagers(), village.getVillagersLimit(),
                             (villager) -> true, "");
                 }
 
                 // Optimize cats
-                if (village.cats.size() > village.getCatsLimit()) {
+                if (village.getCats().size() > village.getCatsLimit()) {
                     customLogger.info(String.format("Too many cats (>%d) in village #%d, the excessive %d cat(s) will be removed",
-                            village.getCatsLimit(), villageId, village.cats.size() - village.getCatsLimit()));
+                            village.getCatsLimit(), villageId, village.getCats().size() - village.getCatsLimit()));
 
-                    removed += optimizeEntities(village.cats, village.getCatsLimit(), (cat) -> !cat.isAdult(), "baby");
-                    removed += optimizeEntities(village.cats, village.getCatsLimit(), (cat) -> true, "");
+                    removed += optimizeEntities(village.getCats(), village.getCatsLimit(), (cat) -> !cat.isAdult(), "baby");
+                    removed += optimizeEntities(village.getCats(), village.getCatsLimit(), (cat) -> true, "");
                 }
 
                 // Optimize iron golems
-                if (village.ironGolems.size() > village.getIronGolemsLimit()) {
+                if (village.getIronGolems().size() > village.getIronGolemsLimit()) {
                     customLogger.info(String.format("Only %d iron golem(s) in village #%d have support of villages, the excessive %d iron golem(s) will be removed",
-                            village.getIronGolemsLimit(), villageId, village.ironGolems.size() - village.getIronGolemsLimit()));
+                            village.getIronGolemsLimit(), villageId, village.getIronGolems().size() - village.getIronGolemsLimit()));
 
-                    removed += optimizeEntities(village.ironGolems, village.getIronGolemsLimit(), (ironGolem) -> true, "");
+                    removed += optimizeEntities(village.getIronGolems(), village.getIronGolemsLimit(), (ironGolem) -> true, "");
                 }
             }
         }
@@ -287,28 +287,29 @@ public class VillageInfo {
             final List<String> lines = new ArrayList<>();
             for (final World world : plugin.getServer().getWorlds()) {
                 final Collection<Villager> entities = world.getEntitiesByClass(Villager.class);
-                if (!entities.isEmpty()) {
-                    lines.add(String.format("==== World '%s' ====", world.getName()));
-                    Villages villages = getVillages(world);
+                Villages villages = getVillages(world);
+                final Village lostVillage = villages.get(LOST_VILLAGE_ID);
 
-                    final Village lostVillage = villages.get(LOST_VILLAGE_ID);
-                    lines.add(String.format("Lost Villagers: %d", lostVillage.villagers.size()));
-                    lines.add(String.format("Lost Iron Golems: %d", lostVillage.ironGolems.size()));
-                    lines.add(String.format("Lost Cats: %d", lostVillage.cats.size()));
+                if(!entities.isEmpty() || !lostVillage.getVillagers().isEmpty()
+                        || !lostVillage.getIronGolems().isEmpty() || !lostVillage.getCats().isEmpty()) {
+                    lines.add(String.format("==== World '%s' ====", world.getName()));
+                    lines.add(String.format("Lost Villagers: %d", lostVillage.getVillagers().size()));
+                    lines.add(String.format("Lost Iron Golems: %d", lostVillage.getIronGolems().size()));
+                    lines.add(String.format("Lost Cats: %d", lostVillage.getCats().size()));
                     lines.addAll(getViewTextLines(entities));
 
                     for (final Map.Entry<Integer, Village> entry : villages.entrySet()) {
                         final Integer villageId = entry.getKey();
-                        if(!villageId.equals(LOST_VILLAGE_ID)) {
+                        if (!villageId.equals(LOST_VILLAGE_ID)) {
                             final Village village = entry.getValue();
 
                             lines.add(String.format("== World '%s', village #%d ==", world.getName(), villageId));
-                            lines.add(String.format("  Beds: %d", village.bedHeads.size()));
-                            lines.add(String.format("  Villagers: %d/%d", village.villagers.size(), village.getVillagersLimit()));
-                            lines.add(String.format("  Iron Golems: %d/%d", village.ironGolems.size(), village.getIronGolemsLimit()));
-                            lines.add(String.format("  Cats: %d/%d", village.cats.size(), village.getCatsLimit()));
-                            if (!village.villagers.isEmpty()) {
-                                lines.addAll(getViewTextLines(village.villagers));
+                            lines.add(String.format("  Beds: %d", village.getBedHeads().size()));
+                            lines.add(String.format("  Villagers: %d/%d", village.getVillagers().size(), village.getVillagersLimit()));
+                            lines.add(String.format("  Iron Golems: %d/%d", village.getIronGolems().size(), village.getIronGolemsLimit()));
+                            lines.add(String.format("  Cats: %d/%d", village.getCats().size(), village.getCatsLimit()));
+                            if (!village.getVillagers().isEmpty()) {
+                                lines.addAll(getViewTextLines(village.getVillagers()));
                             }
                         }
                     }
