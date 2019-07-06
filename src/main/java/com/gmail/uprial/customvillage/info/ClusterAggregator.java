@@ -11,6 +11,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 class ClusterAggregator {
     private class RegionCluster extends HashMap<Vector, Integer> {
@@ -34,6 +35,8 @@ class ClusterAggregator {
     private RegionCluster regionCluster = new RegionCluster();
     private final ClusterArea clusterArea = new ClusterArea();
 
+    private final Map<Vector,List<Block>> regionBlocksCache = new HashMap<>();
+
     private static final String KEY_DELIMITER = ":";
 
     ClusterAggregator(final World world, final Vector scale, final int searchDepth) {
@@ -42,7 +45,7 @@ class ClusterAggregator {
         this.searchDepth = searchDepth;
     }
 
-    <T extends Entity> void populate(Collection<T> entities) {
+    <T extends Entity> void populate(final Collection<T> entities) {
         final PopulationMap populationMap = new PopulationMap();
 
         for (final Entity entity : entities) {
@@ -56,11 +59,11 @@ class ClusterAggregator {
         return clusterArea.keySet();
     }
 
-    <T extends Entity> Integer getEntityClusterId(T entity) {
+    <T extends Entity> Integer getEntityClusterId(final T entity) {
         return regionCluster.get(getRegion(entity.getLocation().toVector()));
     }
 
-    <T extends Entity> List<T> fetchEntities(Class<T> tClass, BiConsumer<Integer,T> consumer) {
+    <T extends Entity> List<T> fetchEntities(final Class<T> tClass, final BiConsumer<Integer,T> consumer) {
         List<T> lostEntities = new ArrayList<>();
         for (final T entity : world.getEntitiesByClass(tClass)) {
             final Integer clusterId = regionCluster.get(getRegion(entity.getLocation().toVector()));
@@ -74,7 +77,7 @@ class ClusterAggregator {
         return lostEntities;
     }
 
-    void fetchBlocksInCluster(int clusterId, Consumer<Block> consumer) {
+    List<Block> getBlocksInCluster(final int clusterId, final Function<Block,Boolean> toAdd) {
         final Area area = getArea(clusterId);
 
         final Set<Vector> nearRegions = new HashSet<>();
@@ -82,22 +85,16 @@ class ClusterAggregator {
             fetchNearRegions(region, nearRegions::add);
         }
 
+        final List<Block> blocks = new ArrayList<>();
         for (final Vector region : nearRegions) {
-            final int x1 = (region.getBlockX()) * scale.getBlockX();
-            final int x2 = (region.getBlockX() + 1) * scale.getBlockX() - 1;
-            final int y1 = (region.getBlockY()) * scale.getBlockY();
-            final int y2 = (region.getBlockY() + 1) * scale.getBlockY() - 1;
-            final int z1 = (region.getBlockZ()) * scale.getBlockZ();
-            final int z2 = (region.getBlockZ() + 1) * scale.getBlockZ() - 1;
-
-            for (int x = x1; x <= x2; x++) {
-                for (int y = y1; y <= y2; y++) {
-                    for (int z = z1; z <= z2; z++) {
-                        consumer.accept(world.getBlockAt(x, y, z));
-                    }
-                }
-            }
+            blocks.addAll(getBlocksInRegion(region, toAdd));
         }
+
+        return blocks;
+    }
+
+    void clearRegionBlocksCache(final Block block) {
+        regionBlocksCache.remove(getRegion(block.getLocation().toVector()));
     }
 
     StorageData getDump() {
@@ -169,6 +166,36 @@ class ClusterAggregator {
 
     // ==== PRIVATE METHODS ====
 
+    private List<Block> getBlocksInRegion(final Vector region, final Function<Block, Boolean> toAdd) {
+        List<Block> blocks = regionBlocksCache.get(region);
+        if(blocks != null) {
+            return blocks;
+        }
+
+        blocks = new ArrayList<>();
+        regionBlocksCache.put(region, blocks);
+
+        final int x1 = (region.getBlockX()) * scale.getBlockX();
+        final int x2 = (region.getBlockX() + 1) * scale.getBlockX() - 1;
+        final int y1 = (region.getBlockY()) * scale.getBlockY();
+        final int y2 = (region.getBlockY() + 1) * scale.getBlockY() - 1;
+        final int z1 = (region.getBlockZ()) * scale.getBlockZ();
+        final int z2 = (region.getBlockZ() + 1) * scale.getBlockZ() - 1;
+
+        for (int x = x1; x <= x2; x++) {
+            for (int y = y1; y <= y2; y++) {
+                for (int z = z1; z <= z2; z++) {
+                    Block block = world.getBlockAt(x, y, z);
+                    if(toAdd.apply(block)) {
+                        blocks.add(block);
+                    }
+                }
+            }
+        }
+
+        return blocks;
+    }
+
     private Area getArea(int clusterId) {
         final Area area = clusterArea.get(clusterId);
         if (area == null) {
@@ -236,11 +263,7 @@ class ClusterAggregator {
             final Vector region = entry.getKey();
             final Integer clusterId = entry.getValue();
 
-            Area area = clusterArea.get(clusterId);
-            if (area == null) {
-                area = new Area();
-                clusterArea.put(clusterId, area);
-            }
+            Area area = clusterArea.computeIfAbsent(clusterId, k -> new Area());
             area.add(region);
         }
     }

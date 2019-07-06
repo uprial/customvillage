@@ -1,6 +1,7 @@
 package com.gmail.uprial.customvillage.common;
 
 import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.util.Vector;
 
@@ -22,5 +23,15 @@ public final class Formatter {
         }
         return String.format("[x: %.2f, y: %.2f, z: %.2f, len: %.2f]",
                 vector.getX(), vector.getY(), vector.getZ(), vector.length());
+    }
+
+    public static String format(Block block) {
+        if(block == null) {
+            return "null";
+        }
+        return String.format("%s[world: %s, x: %d, y: %d, z: %d]",
+                block.getBlockData().getMaterial(),
+                block.getWorld().getName(),
+                block.getX(), block.getY(), block.getZ());
     }
 }

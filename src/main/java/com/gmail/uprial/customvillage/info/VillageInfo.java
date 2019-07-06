@@ -86,6 +86,16 @@ public class VillageInfo {
         return false;
     }
 
+    public void onBlockChange(Block block) {
+        if(block.getBlockData() instanceof org.bukkit.block.data.type.Bed) {
+            if(customLogger.isDebugMode()) {
+                customLogger.debug(String.format("Block %s has been changed", format(block)));
+            }
+            final ClusterAggregator aggregator = getOrCreateAggregator(block.getWorld());
+            aggregator.clearRegionBlocksCache(block);
+        }
+    }
+
     private void forEachWorld(Consumer<World> consumer, String whatHasBeenDone) {
         measureTime(() -> {
             for (World world : plugin.getServer().getWorlds()) {
@@ -134,14 +144,13 @@ public class VillageInfo {
             final Village village = new Village();
             villages.put(villageId, village);
 
-            aggregator.fetchBlocksInCluster(villageId, (Block block) -> {
+            village.bedHeads.addAll(aggregator.getBlocksInCluster(villageId, (Block block) -> {
                 if (block.getBlockData() instanceof org.bukkit.block.data.type.Bed) {
                     final org.bukkit.block.data.type.Bed bed = (org.bukkit.block.data.type.Bed) block.getBlockData();
-                    if (bed.getPart() == Bed.Part.HEAD) {
-                        village.bedHeads.add(block);
-                    }
+                    return (bed.getPart() == Bed.Part.HEAD);
                 }
-            });
+                return false;
+            }));
         }
 
         final Village lostVillage = new Village();
@@ -173,7 +182,7 @@ public class VillageInfo {
     }
 
     private <T extends Entity> int optimizeEntities(final List<T> entities, final int limit,
-                                                     final Function<T,Boolean> function, String title) {
+                                                     final Function<T,Boolean> toOptimize, String title) {
         int removed = 0;
         if(!title.isEmpty()) {
             title = " " + title;
@@ -182,7 +191,7 @@ public class VillageInfo {
         int i = 0;
         while((i < entities.size() && (entities.size() > limit))) {
             final T entity = entities.get(i);
-            if (function.apply(entity)) {
+            if (toOptimize.apply(entity)) {
                 customLogger.debug(String.format("Removing an excessive%s %s", title, format(entity)));
                 entities.remove(i);
                 entity.remove();

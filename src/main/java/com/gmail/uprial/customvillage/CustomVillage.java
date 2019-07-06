@@ -3,7 +3,9 @@ package com.gmail.uprial.customvillage;
 import com.gmail.uprial.customvillage.common.CustomLogger;
 import com.gmail.uprial.customvillage.config.InvalidConfigException;
 import com.gmail.uprial.customvillage.info.VillageInfo;
+import com.gmail.uprial.customvillage.listeners.CustomVillageBlocksListener;
 import com.gmail.uprial.customvillage.listeners.CustomVillageBreedingEventListener;
+import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
@@ -40,6 +42,7 @@ public final class CustomVillage extends JavaPlugin {
         taskPeriodicSave = new TaskPeriodicSave(this).runTaskTimer();
         taskPeriodicUpdate = new TaskPeriodicUpdate(this).runTaskTimer();
         getServer().getPluginManager().registerEvents(new CustomVillageBreedingEventListener(this, consoleLogger), this);
+        getServer().getPluginManager().registerEvents(new CustomVillageBlocksListener(this, consoleLogger), this);
 
         getCommand(COMMAND_NS).setExecutor(new CustomVillageCommandExecutor(this));
         consoleLogger.info("Plugin enabled");
@@ -99,6 +102,12 @@ public final class CustomVillage extends JavaPlugin {
             return villageInfo.isEntityLimited(entity);
         } else {
             return false;
+        }
+    }
+
+    public void onBlockChange(Block block) {
+        if(customVillageConfig.isEnabled()) {
+            villageInfo.onBlockChange(block);
         }
     }
 
