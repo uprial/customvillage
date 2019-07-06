@@ -69,6 +69,10 @@ class PlainMapViewer {
     }
 
     List<String> getTextLines() {
+        if(map.isEmpty()) {
+            return new ArrayList<>();
+        }
+
         PlainVector minVector = null;
         PlainVector maxVector = null;
 
@@ -135,6 +139,8 @@ class PlainMapViewer {
         return lines;
     }
 
+    // ==== PRIVATE METHODS ====
+
     private char int2char(final int value) {
         if (value < 1) {
             return ' ';
@@ -146,6 +152,8 @@ class PlainMapViewer {
             return '+';
         }
     }
+
+    // ==== COMMON METHODS ====
 
     @Override
     public String toString() {

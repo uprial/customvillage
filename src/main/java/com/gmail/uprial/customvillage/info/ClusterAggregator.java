@@ -282,6 +282,7 @@ class ClusterAggregator {
                 vector.getBlockZ() / scale.getBlockZ());
     }
 
+    // ==== COMMON METHODS ====
 
     @Override
     public String toString() {
