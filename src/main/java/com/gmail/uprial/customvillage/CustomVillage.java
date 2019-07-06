@@ -88,6 +88,10 @@ public final class CustomVillage extends JavaPlugin {
         villageInfo.update();
     }
 
+    public void optimize() {
+        villageInfo.optimize();
+    }
+
     static CustomVillageConfig loadConfig(FileConfiguration config, CustomLogger customLogger) {
         return loadConfig(config, customLogger, null);
     }

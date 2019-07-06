@@ -8,17 +8,22 @@ Tested on Spigot-1.14.2.
 
 A Minecraft (Bukkit) plugin that allows to detect and control custom villages.
 
-This plugin takes care of the pain I experienced when I created my own village. I created a big enough village, and its population took out of control. Villagers seemed to grow infinitely. Cats were leaving the village and were limited in count in villages only. Golems were obedient and followed the documented rules, but my god, they anyway followed the infinity of villagers. I ended up with a mess of hundreds of illegal entities on the map. Fortunately, here I could fix the issue.
+This plugin takes care of the pain I experienced when I created my own village.
+I created a big enough village, and its population took out of control.
+Villagers seemed to grow infinitely. Cats were leaving the village and were limited in count in villages only.
+Golems were obedient and followed the documented rules, but my god, they anyway followed the infinity of villagers.
+I ended up with a mess of hundreds of illegal entities on the map. Fortunately, here I could fix the issue.
 
 ## Features
 
 * Detect villages and limit villagers population considering the beds' count
-* Limit population of cats and iron golems strongly according to the documentation
+* Limit population of cats (not tamed) and iron golems (non-player created) strongly according to the documentation
 
 ## Commands
 
 `customvillage reload` - reload config from disk
 `customvillage info` - show information about existing villages
+`customvillage optimize` - removes excessive villagers, iron golems and cats
 
 ## Permissions
 
@@ -27,6 +32,9 @@ This plugin takes care of the pain I experienced when I created my own village. 
 
 * Access to 'info' command:
 `customdamage.info` (default: op)
+
+* Access to 'optimize' command:
+`customdamage.optimize` (default: op)
 
 ## Configuration
 [Default configuration file](src/main/resources/config.yml)

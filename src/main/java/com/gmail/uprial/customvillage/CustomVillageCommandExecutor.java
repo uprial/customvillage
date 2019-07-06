@@ -34,11 +34,19 @@ class CustomVillageCommandExecutor implements CommandExecutor {
                     return true;
                 }
             }
+            else if((args.length >= 1) && (args[0].equalsIgnoreCase("optimize"))) {
+                if (sender.hasPermission(COMMAND_NS + ".optimize")) {
+                    plugin.optimize();
+                    return true;
+                }
+            }
             else if((args.length == 0) || (args[0].equalsIgnoreCase("help"))) {
                 String helpString = "==== CustomVillage help ====\n";
 
                 if (sender.hasPermission(COMMAND_NS + ".reload")) {
                     helpString += '/' + COMMAND_NS + " reload - reload config from disk\n";
+                    helpString += '/' + COMMAND_NS + " info - show information about existing villages\n";
+                    helpString += '/' + COMMAND_NS + " optimize - removes excessive villagers, iron golems and cats\n";
                 }
 
                 customLogger.info(helpString);

@@ -71,10 +71,7 @@ class ClusterAggregator {
     }
 
     void fetchBlocksInCluster(int clusterId, Consumer<Block> consumer) {
-        final Area area = clusterArea.get(clusterId);
-        if(area == null) {
-            throw new VillageInfoError(String.format("Cluster #%d not found.", clusterId));
-        }
+        final Area area = getArea(clusterId);
 
         final Set<Vector> nearRegions = new HashSet<>();
         for (final Vector region : area) {
@@ -155,7 +152,27 @@ class ClusterAggregator {
         calculateClusterArea();
     }
 
+    boolean isFullyLoaded(int clusterId) {
+        final Area area = getArea(clusterId);
+        for(Vector region : area) {
+            if(!isRegionLoaded(region)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     // ==== PRIVATE METHODS ====
+
+    private Area getArea(int clusterId) {
+        final Area area = clusterArea.get(clusterId);
+        if (area == null) {
+            throw new VillageInfoError(String.format("Cluster #%d not found.", clusterId));
+        }
+
+        return area;
+    }
 
     void populate(PopulationMap populationMap) {
         // Some regions aren't loaded, so we need to keep them in the database though there are no entities loaded there.

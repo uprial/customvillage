@@ -14,3 +14,6 @@ permissions:
   customvillage.info:
     description: Gives access to CustomVillage 'info' command
     default: op
+  customvillage.optimize:
+    description: Gives access to CustomVillage 'optimize' command
+    default: op
