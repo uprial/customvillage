@@ -21,8 +21,9 @@ public class CustomStorage {
 
     public void save(StorageData data) {
         if(!dataFolder.exists()) {
-            //noinspection ResultOfMethodCallIgnored
-            dataFolder.mkdir();
+            if(!dataFolder.mkdir()) {
+                customLogger.error(String.format("Can't create directory %s", dataFolder.getPath()));
+            }
         }
 
         try {
@@ -46,34 +47,42 @@ public class CustomStorage {
     }
 
     private void saveData(StorageData data) throws IOException {
-        FileWriter fileWriter = new FileWriter(getFileName());
-        BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+        final String filename = getFileName();
 
-        String[] row = new String[2];
-        for (Entry<String,String> entry : data.entrySet()) {
-            row[0] = entry.getKey();
-            row[1] = entry.getValue();
+        if(!data.isEmpty()) {
+            try(FileWriter fileWriter = new FileWriter(filename)) {
+                try(BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
 
-            bufferedWriter.write(StringUtils.join(row, VALUE_DELIMITER));
-            bufferedWriter.newLine();
+                    String[] row = new String[2];
+                    for (Entry<String, String> entry : data.entrySet()) {
+                        row[0] = entry.getKey();
+                        row[1] = entry.getValue();
+
+                        bufferedWriter.write(StringUtils.join(row, VALUE_DELIMITER));
+                        bufferedWriter.newLine();
+                    }
+                }
+            }
+        } else {
+            if(!new File(filename).delete()) {
+                customLogger.error(String.format("Can't delete file %s", filename));
+            }
         }
-
-        bufferedWriter.close();
     }
 
     private StorageData loadData() throws IOException {
         final StorageData data = new StorageData();
 
-        FileReader fileReader = new FileReader(getFileName());
-        BufferedReader bufferedReader = new BufferedReader(fileReader);
+        try(FileReader fileReader = new FileReader(getFileName())) {
+            try(BufferedReader bufferedReader = new BufferedReader(fileReader)) {
 
-        String line;
-        while((line = bufferedReader.readLine()) != null) {
-            String[] row = StringUtils.split(line, VALUE_DELIMITER);
-            data.put(row[0], row[1]);
+                String line;
+                while ((line = bufferedReader.readLine()) != null) {
+                    String[] row = StringUtils.split(line, VALUE_DELIMITER);
+                    data.put(row[0], row[1]);
+                }
+            }
         }
-
-        bufferedReader.close();
 
         return data;
     }
