@@ -7,13 +7,13 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 public class PlainMapViewerTest {
-    private static final int DEFAULT_SCALE = 8;
+    private static final int TEST_PLAIN_MAP_SCALE = 8;
 
     private PlainMapViewer viewer = null;
 
     @Before
     public void setUp() throws Exception {
-        viewer = new PlainMapViewer(DEFAULT_SCALE);
+        viewer = new PlainMapViewer(TEST_PLAIN_MAP_SCALE);
     }
 
     @Test
