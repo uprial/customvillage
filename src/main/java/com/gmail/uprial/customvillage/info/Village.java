@@ -32,6 +32,6 @@ class Village {
     }
 
     int getIronGolemsLimit() {
-        return villagers.size() / VILLAGERS_PER_GOLEM;
+        return Math.min(getVillagersLimit(), villagers.size()) / VILLAGERS_PER_GOLEM;
     }
 }
