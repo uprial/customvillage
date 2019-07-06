@@ -41,8 +41,6 @@ public class CustomVillageBreedingEventListener implements Listener {
     @SuppressWarnings("unused")
     @EventHandler(priority = EventPriority.NORMAL)
     public void onCreatureSpawnEvent(CreatureSpawnEvent event) {
-        customLogger.debug(String.format("Spawning of %s due to %s...",
-                format(event.getEntity()), event.getSpawnReason()));
         if(!event.isCancelled() && plugin.isEnabled()) {
             final Entity entity = event.getEntity();
             if (!plugin.isEntityAllowed(entity)) {
