@@ -2,7 +2,9 @@ package com.gmail.uprial.customvillage.listeners;
 
 import com.gmail.uprial.customvillage.CustomVillage;
 import com.gmail.uprial.customvillage.common.CustomLogger;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -50,12 +52,23 @@ public class CustomVillageBreedingEventListener implements Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     public void onEntityTransformEvent(EntityTransformEvent event) {
         if(!event.isCancelled() && plugin.isEnabled()) {
-            for (Entity entity : event.getTransformedEntities()) {
-                if (!plugin.isEntityAllowed(entity)) {
-                    customLogger.debug(String.format("Transformation of %s due to %s is not allowed",
-                            format(event.getEntity()), event.getTransformReason()));
+            final Entity sourceEntity = event.getEntity();
+            for (final Entity targetEntity : event.getTransformedEntities()) {
+                if (!plugin.isEntityAllowed(targetEntity)) {
+                    if(customLogger.isDebugMode()) {
+                        customLogger.debug(String.format("Transformation of %s to %s due to %s is not allowed",
+                                format(sourceEntity), format(targetEntity), event.getTransformReason()));
+                    }
+                    // If we don't kill or remove a zombie villager, it'll continue trying to transform.
+                    if(sourceEntity instanceof LivingEntity) {
+                        final LivingEntity sourceLivingEntity = (LivingEntity)sourceEntity;
+                        final double maxHealth = sourceLivingEntity.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue();
+                        sourceLivingEntity.damage(maxHealth * 2.0);
+                    } else {
+                        sourceEntity.remove();
+                    }
                     event.setCancelled(true);
-                    return;
+                    break;
                 }
             }
         }
