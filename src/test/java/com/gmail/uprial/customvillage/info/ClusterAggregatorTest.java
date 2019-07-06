@@ -65,6 +65,7 @@ public class ClusterAggregatorTest {
 
     @Test
     public void testIsRegionLoaded() throws Exception {
+        // 4 * 32 = 128, 128 > 100 -> isBlockLoaded
         assertFalse(aggregator.isRegionLoaded(new Vector(1, 1, 1)));
         assertFalse(aggregator.isRegionLoaded(new Vector(2, 1, 1)));
         assertFalse(aggregator.isRegionLoaded(new Vector(4, 1, 1)));
