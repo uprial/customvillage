@@ -8,6 +8,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Bed;
 import org.bukkit.entity.Cat;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.IronGolem;
 import org.bukkit.entity.Villager;
 import org.bukkit.util.Vector;
@@ -48,6 +49,7 @@ public class VillageInfo {
     public VillageInfo(CustomVillage plugin, CustomLogger customLogger) {
         this.plugin = plugin;
         this.customLogger = customLogger;
+        update();
     }
 
     public void save() {
@@ -167,16 +169,10 @@ public class VillageInfo {
             for (World world : plugin.getServer().getWorlds()) {
                 final Collection<Villager> entities = world.getEntitiesByClass(Villager.class);
                 if (!entities.isEmpty()) {
-                    final PlainMapViewer viewer = new PlainMapViewer(PLAIN_MAP_SCALE);
-                    for (Villager entity : entities) {
-                        Location location = entity.getLocation();
-                        viewer.add(location.getBlockX(), location.getBlockZ());
-                    }
                     lines.add(String.format("==== World '%s' ====", world.getName()));
-                    lines.addAll(viewer.getTextLines());
+                    lines.addAll(getViewTextLines(entities));
 
-                    Map<Integer, Village> villages = getVillages(world);
-                    for (Map.Entry<Integer, Village> entry : villages.entrySet()) {
+                    for (Map.Entry<Integer, Village> entry : getVillages(world).entrySet()) {
                         final Integer villageId = entry.getKey();
                         final Village village = entry.getValue();
 
@@ -186,11 +182,7 @@ public class VillageInfo {
                         lines.add(String.format("  Cats: %d", village.cats.size()));
                         lines.add(String.format("  Beds: %d", village.bedHeads.size()));
                         if (!village.villagers.isEmpty()) {
-                            final PlainMapViewer villageViewer = new PlainMapViewer(PLAIN_MAP_SCALE);
-                            for (Villager entity : village.villagers) {
-                                villageViewer.add(entity.getLocation().getBlockX(), entity.getLocation().getBlockZ());
-                            }
-                            lines.addAll(villageViewer.getTextLines());
+                            lines.addAll(getViewTextLines(village.villagers));
                         }
                     }
                 }
@@ -198,6 +190,15 @@ public class VillageInfo {
 
             return lines;
         }, (time) -> customLogger.debug(String.format("Village info has been gathered in %dms.", time)));
+    }
+
+    private <T extends Entity> List<String> getViewTextLines(Collection<T> entities) {
+        final PlainMapViewer viewer = new PlainMapViewer(PLAIN_MAP_SCALE);
+        for (Entity entity : entities) {
+            Location location = entity.getLocation();
+            viewer.add(location.getBlockX(), location.getBlockZ());
+        }
+        return viewer.getTextLines();
     }
 
     private <T> T measureTime(Func<T> func, Consumer<Long> consumer) {
