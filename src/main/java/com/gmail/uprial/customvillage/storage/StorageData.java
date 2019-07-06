@@ -1,6 +1,6 @@
 package com.gmail.uprial.customvillage.storage;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
-public class StorageData extends HashMap<String,String> {
+public class StorageData extends LinkedHashMap<String,String> {
 }

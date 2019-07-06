@@ -100,11 +100,24 @@ class ClusterAggregator {
     }
 
     StorageData getDump() {
+        Comparator<Vector> comparator = (Vector v1, Vector v2) -> {
+            if(v1.getBlockX() < v2.getBlockX()) {
+                return -1;
+            } else if(v1.getBlockX() > v2.getBlockX()) {
+                return 1;
+            } else if(v1.getBlockY() < v2.getBlockY()) {
+                return -1;
+            } else if(v1.getBlockY() > v2.getBlockY()) {
+                return 1;
+            } else return Integer.compare(v1.getBlockZ(), v2.getBlockZ());
+        };
+        final Set<Vector> regions = new TreeSet<Vector>(comparator) {{ addAll(regionCluster.keySet()); }};
+
         final StorageData data = new StorageData();
         final String[] keyParts = new String[3];
-        for (final Map.Entry<Vector, Integer> entry : regionCluster.entrySet()) {
-            final Vector region = entry.getKey();
-            final Integer clusterId = entry.getValue();
+
+        for (final Vector region: regions) {
+            final Integer clusterId = regionCluster.get(region);
 
             keyParts[0] = String.valueOf(region.getBlockX());
             keyParts[1] = String.valueOf(region.getBlockY());
@@ -276,7 +289,7 @@ class ClusterAggregator {
         map.put("world", String.valueOf(world));
         map.put("scale", scale.toString());
         map.put("searchDepth", String.valueOf(searchDepth));
-        map.put("regionCluster", regionCluster.toString());
+        map.put("dump", getDump().toString());
 
         return map.toString();
     }
