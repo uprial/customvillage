@@ -14,6 +14,9 @@ public class ClusterAggregatorTest {
     private static final int TEST_CLUSTER_SEARCH_DEPTH = 1;
 
     private class TestClusterAggregator extends ClusterAggregator {
+        //
+        private int loadedSquareCenterX = 200;
+        private int loadedSquareCenterZ = 200;
 
         TestClusterAggregator() {
             super(null, TEST_CLUSTER_SCALE, TEST_CLUSTER_SEARCH_DEPTH);
@@ -21,7 +24,12 @@ public class ClusterAggregatorTest {
 
         @Override
         boolean isBlockLoaded(int x, int z) {
-            return (x > 100) && (z > 100);
+            return (Math.abs(x - loadedSquareCenterX) <= 100) && (Math.abs(z - loadedSquareCenterZ) <= 100);
+        }
+
+        void moveLoadedSquareCenter(int x, int z) {
+            loadedSquareCenterX = x;
+            loadedSquareCenterZ = z;
         }
     }
 
@@ -71,5 +79,77 @@ public class ClusterAggregatorTest {
         assertFalse(aggregator.isRegionLoaded(new Vector(4, 1, 1)));
         assertFalse(aggregator.isRegionLoaded(new Vector(4, 1, 2)));
         assertTrue(aggregator.isRegionLoaded(new Vector(4, 1, 4)));
+    }
+
+    @Test
+    public void testEmptyPopulation() throws Exception {
+        aggregator.populate(new PopulationMap());
+        assertEquals("{}", aggregator.getDump().toString());
+    }
+
+    @Test
+    public void testSinglePopulation() throws Exception {
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(1, 1, 1));
+        }});
+        assertEquals("{1:1:1=1}", aggregator.getDump().toString());
+    }
+
+    @Test
+    public void testSingleCluster() throws Exception {
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(1, 1, 1));
+            add(new Vector(2, 2, 2));
+        }});
+        assertEquals("{1:1:1=1, 2:2:2=1}", aggregator.getDump().toString());
+    }
+
+    @Test
+    public void testSeveralGroupIterations() throws Exception {
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(1, 1, 1));
+            add(new Vector(4, 1, 1));
+            add(new Vector(2, 1, 1));
+            add(new Vector(3, 1, 1));
+        }});
+        assertEquals("{1:1:1=1, 2:2:2=1}", aggregator.getDump().toString());
+    }
+
+    @Test
+    public void testSaveEmptyButUnloadedRegions() throws Exception {
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(1, 1, 1));
+        }});
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(4, 4, 4));
+        }});
+        assertEquals("{1:1:1=1, 4:4:4=2}", aggregator.getDump().toString());
+    }
+
+    @Test
+    public void testClearEmptyAndLoadedRegions() throws Exception {
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(6, 6, 6));
+        }});
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(4, 4, 4));
+        }});
+        assertEquals("{4:4:4=1}", aggregator.getDump().toString());
+    }
+
+    @Test
+    public void testStableClusterId() throws Exception {
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(3, 3, 3));
+            add(new Vector(6, 6, 6));
+        }});
+        assertEquals("{6:6:6=2, 3:3:3=1}", aggregator.getDump().toString());
+
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(6, 6, 6));
+            add(new Vector(1, 1, 1));
+            add(new Vector(3, 3, 3));
+        }});
+        assertEquals("{1:1:1=3, 6:6:6=2, 3:3:3=1}", aggregator.getDump().toString());
     }
 }

@@ -12,9 +12,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 class ClusterAggregator {
-    private class PopulationMap extends HashSet<Vector> {
-    }
-
     private class RegionCluster extends HashMap<Vector, Integer> {
         RegionCluster() {
             super();
@@ -51,7 +48,7 @@ class ClusterAggregator {
             populationMap.add(getRegion(entity.getLocation().toVector()));
         }
 
-        optimize(populationMap);
+        populate(populationMap);
     }
 
     Set<Integer> getAllClusterIds() {
@@ -158,9 +155,9 @@ class ClusterAggregator {
 
     // ==== PRIVATE METHODS ====
 
-    private void optimize(PopulationMap populationMap) {
+    void populate(PopulationMap populationMap) {
         // ClusterId is an auto-increment value, so we need to calculate the max existing id.
-        int maxInitialClusterId = 0;
+        int initialMaxClusterId = 0;
         // Some regions aren't loaded, so we need to keep them in the database though there are no entities loaded there.
         final RegionCluster unloadedRegionCluster = new RegionCluster();
         for (final Map.Entry<Vector, Integer> entry : regionCluster.entrySet()) {
@@ -169,15 +166,14 @@ class ClusterAggregator {
 
             if (!isRegionLoaded(region)) {
                 unloadedRegionCluster.put(region, clusterId);
+                initialMaxClusterId = Math.max(initialMaxClusterId, clusterId);
             }
-            maxInitialClusterId = Math.max(maxInitialClusterId, clusterId);
         }
         // In order to keep the stable ClusterId distribution, we need to keep the original ids when it's possible.
         final RegionCluster origRegionCluster = new RegionCluster(regionCluster);
-
         boolean isFixed = false;
         while (!isFixed) {
-            int clusterIdCounter = maxInitialClusterId + 1;
+            int maxClusterId = initialMaxClusterId;
             // Start from the unloaded regions.
             final RegionCluster newRegionCluster = new RegionCluster(unloadedRegionCluster);
 
@@ -190,11 +186,11 @@ class ClusterAggregator {
                     newClusterId = findNearClusterId(newRegionCluster, region);
 
                     if (newClusterId == null) {
-                        newClusterId = clusterIdCounter;
-                        clusterIdCounter++;
+                        newClusterId = maxClusterId + 1;
                     }
                 }
 
+                maxClusterId = Math.max(maxClusterId, newClusterId);
                 newRegionCluster.put(region, newClusterId);
             }
 
