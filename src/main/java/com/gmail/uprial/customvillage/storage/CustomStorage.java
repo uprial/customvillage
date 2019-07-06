@@ -13,6 +13,8 @@ public class CustomStorage {
     private final String fileName;
     private final CustomLogger customLogger;
 
+    private StorageData lastData;
+
     public CustomStorage(File dataFolder, String fileName, CustomLogger customLogger) {
         this.dataFolder = dataFolder;
         this.fileName = fileName;
@@ -20,30 +22,44 @@ public class CustomStorage {
     }
 
     public void save(StorageData data) {
-        if(!dataFolder.exists()) {
-            if(!dataFolder.mkdir()) {
-                customLogger.error(String.format("Can't create directory %s", dataFolder.getPath()));
-            }
+        if(data.equals(lastData)) {
+            customLogger.debug(String.format("Skipping write to %s: data has not been changed", getFileName()));
+            return;
         }
 
         try {
-            saveData(data);
-        } catch (IOException e) {
-            customLogger.error(e.toString());
+            if (!dataFolder.exists()) {
+                if (!dataFolder.mkdir()) {
+                    customLogger.error(String.format("Can't create directory %s", dataFolder.getPath()));
+                }
+            }
+
+            try {
+                saveData(data);
+            } catch (IOException e) {
+                customLogger.error(e.toString());
+            }
+        } finally {
+            lastData = data;
         }
     }
 
     public StorageData load() {
-        final File file = new File(getFileName());
-        if(file.exists()) {
-            try {
-                return loadData();
-            } catch (IOException e) {
-                customLogger.error(e.toString());
+        StorageData data = new StorageData();
+        try {
+            final File file = new File(getFileName());
+            if (file.exists()) {
+                try {
+                    data = loadData();
+                } catch (IOException e) {
+                    customLogger.error(e.toString());
+                }
             }
-        }
 
-        return new StorageData();
+            return data;
+        } finally {
+            lastData = data;
+        }
     }
 
     private void saveData(StorageData data) throws IOException {
