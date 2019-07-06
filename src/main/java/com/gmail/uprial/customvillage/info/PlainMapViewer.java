@@ -77,7 +77,7 @@ class PlainMapViewer {
         PlainVector maxVector = null;
 
         // Calculate boundaries.
-        for(Map.Entry<PlainVector,Integer> entry : map.entrySet()) {
+        for(final Map.Entry<PlainVector,Integer> entry : map.entrySet()) {
             final PlainVector vector = entry.getKey();
 
             if (minVector == null) {

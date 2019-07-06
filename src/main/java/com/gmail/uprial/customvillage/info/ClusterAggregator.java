@@ -63,7 +63,7 @@ class ClusterAggregator {
 
     <T extends Entity> List<T> fetchEntities(Class<T> tClass, BiConsumer<Integer,T> consumer) {
         List<T> lostEntities = new ArrayList<>();
-        for (T entity : world.getEntitiesByClass(tClass)) {
+        for (final T entity : world.getEntitiesByClass(tClass)) {
             final Integer clusterId = regionCluster.get(getNormalizedVector(entity.getLocation().toVector()));
             if(clusterId != null) {
                 consumer.accept(clusterId, entity);
@@ -82,7 +82,7 @@ class ClusterAggregator {
         }
 
         final Set<Vector> nearRegion = new HashSet<>();
-        for (Vector vector : region) {
+        for (final Vector vector : region) {
             final int x1 = vector.getBlockX() - searchDepth;
             final int x2 = vector.getBlockX() + searchDepth;
             final int y1 = vector.getBlockY() - searchDepth;
@@ -98,7 +98,7 @@ class ClusterAggregator {
             }
         }
 
-        for (Vector vector : nearRegion) {
+        for (final Vector vector : nearRegion) {
             final int x1 = (vector.getBlockX()) * scale.getBlockX();
             final int x2 = (vector.getBlockX() + 1) * scale.getBlockX() - 1;
             final int y1 = (vector.getBlockY()) * scale.getBlockY();
@@ -119,7 +119,7 @@ class ClusterAggregator {
     StorageData getDump() {
         final StorageData data = new StorageData();
         final String[] keyParts = new String[3];
-        for (Map.Entry<Vector, Integer> entry : regionCluster.entrySet()) {
+        for (final Map.Entry<Vector, Integer> entry : regionCluster.entrySet()) {
             final Vector vector = entry.getKey();
             final Integer clusterId = entry.getValue();
 
@@ -135,7 +135,7 @@ class ClusterAggregator {
     void loadFromDump(StorageData data) {
         final RegionCluster newRegionCluster = new RegionCluster();
 
-        for (Map.Entry<String,String> entry : data.entrySet()) {
+        for (final Map.Entry<String,String> entry : data.entrySet()) {
             final String key = entry.getKey();
 
             final String[] items = StringUtils.split(key, KEY_DELIMITER);
@@ -212,7 +212,7 @@ class ClusterAggregator {
 
     private void calculateClusterRegion() {
         clusterRegion.clear();
-        for (Map.Entry<Vector, Integer> entry : regionCluster.entrySet()) {
+        for (final Map.Entry<Vector, Integer> entry : regionCluster.entrySet()) {
             final Vector vector = entry.getKey();
             final Integer clusterId = entry.getValue();
 
