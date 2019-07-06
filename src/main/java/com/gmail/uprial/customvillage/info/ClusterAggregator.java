@@ -199,7 +199,7 @@ class ClusterAggregator {
             final Vector region = entry.getKey();
             final Integer clusterId = entry.getValue();
 
-            Area area = clusterArea.get(region);
+            Area area = clusterArea.get(clusterId);
             if (area == null) {
                 area = new Area();
                 clusterArea.put(clusterId, area);
