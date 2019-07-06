@@ -24,9 +24,9 @@ class ClusterAggregator {
         }
     }
 
-    private class Region extends ArrayList<Vector> {
+    private class Area extends ArrayList<Vector> {
     }
-    private class ClusterRegion extends HashMap<Integer, Region> {
+    private class ClusterArea extends HashMap<Integer, Area> {
     }
 
     private final World world;
@@ -34,7 +34,7 @@ class ClusterAggregator {
     private final int searchDepth;
 
     private RegionCluster regionCluster = new RegionCluster();
-    private final ClusterRegion clusterRegion = new ClusterRegion();
+    private final ClusterArea clusterArea = new ClusterArea();
 
     private static final String KEY_DELIMITER = ":";
 
@@ -48,23 +48,20 @@ class ClusterAggregator {
         final PopulationMap populationMap = new PopulationMap();
 
         for (final Entity entity : entities) {
-            final Vector vector = entity.getLocation().toVector();
-            final Vector normalizedVector = getNormalizedVector(vector);
-
-            populationMap.add(normalizedVector);
+            populationMap.add(getRegion(entity.getLocation().toVector()));
         }
 
         optimize(populationMap);
     }
 
     Set<Integer> getAllClusterIds() {
-        return clusterRegion.keySet();
+        return clusterArea.keySet();
     }
 
     <T extends Entity> List<T> fetchEntities(Class<T> tClass, BiConsumer<Integer,T> consumer) {
         List<T> lostEntities = new ArrayList<>();
         for (final T entity : world.getEntitiesByClass(tClass)) {
-            final Integer clusterId = regionCluster.get(getNormalizedVector(entity.getLocation().toVector()));
+            final Integer clusterId = regionCluster.get(getRegion(entity.getLocation().toVector()));
             if(clusterId != null) {
                 consumer.accept(clusterId, entity);
             } else {
@@ -76,19 +73,19 @@ class ClusterAggregator {
     }
 
     void fetchBlocksInCluster(int clusterId, Consumer<Block> consumer) {
-        final Region region = clusterRegion.get(clusterId);
-        if(region == null) {
+        final Area area = clusterArea.get(clusterId);
+        if(area == null) {
             throw new VillageInfoError(String.format("Cluster #%d not found.", clusterId));
         }
 
         final Set<Vector> nearRegion = new HashSet<>();
-        for (final Vector vector : region) {
-            final int x1 = vector.getBlockX() - searchDepth;
-            final int x2 = vector.getBlockX() + searchDepth;
-            final int y1 = vector.getBlockY() - searchDepth;
-            final int y2 = vector.getBlockY() + searchDepth;
-            final int z1 = vector.getBlockZ() - searchDepth;
-            final int z2 = vector.getBlockZ() + searchDepth;
+        for (final Vector region : area) {
+            final int x1 = region.getBlockX() - searchDepth;
+            final int x2 = region.getBlockX() + searchDepth;
+            final int y1 = region.getBlockY() - searchDepth;
+            final int y2 = region.getBlockY() + searchDepth;
+            final int z1 = region.getBlockZ() - searchDepth;
+            final int z2 = region.getBlockZ() + searchDepth;
             for (int x = x1; x <= x2; x++) {
                 for (int y = y1; y <= y2; y++) {
                     for (int z = z1; z <= z2; z++) {
@@ -98,13 +95,13 @@ class ClusterAggregator {
             }
         }
 
-        for (final Vector vector : nearRegion) {
-            final int x1 = (vector.getBlockX()) * scale.getBlockX();
-            final int x2 = (vector.getBlockX() + 1) * scale.getBlockX() - 1;
-            final int y1 = (vector.getBlockY()) * scale.getBlockY();
-            final int y2 = (vector.getBlockY() + 1) * scale.getBlockY() - 1;
-            final int z1 = (vector.getBlockZ()) * scale.getBlockZ();
-            final int z2 = (vector.getBlockZ() + 1) * scale.getBlockZ() - 1;
+        for (final Vector region : nearRegion) {
+            final int x1 = (region.getBlockX()) * scale.getBlockX();
+            final int x2 = (region.getBlockX() + 1) * scale.getBlockX() - 1;
+            final int y1 = (region.getBlockY()) * scale.getBlockY();
+            final int y2 = (region.getBlockY() + 1) * scale.getBlockY() - 1;
+            final int z1 = (region.getBlockZ()) * scale.getBlockZ();
+            final int z2 = (region.getBlockZ() + 1) * scale.getBlockZ() - 1;
 
             for (int x = x1; x <= x2; x++) {
                 for (int y = y1; y <= y2; y++) {
@@ -120,12 +117,12 @@ class ClusterAggregator {
         final StorageData data = new StorageData();
         final String[] keyParts = new String[3];
         for (final Map.Entry<Vector, Integer> entry : regionCluster.entrySet()) {
-            final Vector vector = entry.getKey();
+            final Vector region = entry.getKey();
             final Integer clusterId = entry.getValue();
 
-            keyParts[0] = String.valueOf(vector.getBlockX());
-            keyParts[1] = String.valueOf(vector.getBlockY());
-            keyParts[2] = String.valueOf(vector.getBlockZ());
+            keyParts[0] = String.valueOf(region.getBlockX());
+            keyParts[1] = String.valueOf(region.getBlockY());
+            keyParts[2] = String.valueOf(region.getBlockZ());
             data.put(StringUtils.join(keyParts, KEY_DELIMITER), clusterId.toString());
         }
 
@@ -143,9 +140,9 @@ class ClusterAggregator {
                 throw new VillageInfoError(String.format("Can't load from dump: key '%s' is invalid", key));
             }
 
-            final Vector vector;
+            final Vector region;
             try {
-                vector = new Vector(Integer.valueOf(items[0]),
+                region = new Vector(Integer.valueOf(items[0]),
                         Integer.valueOf(items[1]),
                         Integer.valueOf(items[2]));
             } catch (NumberFormatException e) {
@@ -153,10 +150,10 @@ class ClusterAggregator {
             }
 
             final Integer clusterId = Integer.valueOf(entry.getValue());
-            newRegionCluster.put(vector, clusterId);
+            newRegionCluster.put(region, clusterId);
         }
         regionCluster = newRegionCluster;
-        calculateClusterRegion();
+        calculateClusterArea();
     }
 
     // ==== PRIVATE METHODS ====
@@ -167,11 +164,11 @@ class ClusterAggregator {
         // Some regions aren't loaded, so we need to keep them in the database though there are no entities loaded there.
         final RegionCluster unloadedRegionCluster = new RegionCluster();
         for (final Map.Entry<Vector, Integer> entry : regionCluster.entrySet()) {
-            final Vector vector = entry.getKey();
+            final Vector region = entry.getKey();
             final int clusterId = entry.getValue();
 
-            if (!isRegionLoaded(vector)) {
-                unloadedRegionCluster.put(vector, clusterId);
+            if (!isRegionLoaded(region)) {
+                unloadedRegionCluster.put(region, clusterId);
             }
             maxInitialClusterId = Math.max(maxInitialClusterId, clusterId);
         }
@@ -184,13 +181,13 @@ class ClusterAggregator {
             // Start from the unloaded regions.
             final RegionCluster newRegionCluster = new RegionCluster(unloadedRegionCluster);
 
-            for (final Vector vector : populationMap) {
+            for (final Vector region : populationMap) {
                 // Try to find the original ClusterId. Assume that origRegionCluster is always optimized and does not to be simplified.
-                Integer newClusterId = origRegionCluster.get(vector);
+                Integer newClusterId = origRegionCluster.get(region);
 
                 if(newClusterId == null) {
                     // Try to find the nearest cluster.
-                    newClusterId = findNearClusterId(newRegionCluster, vector);
+                    newClusterId = findNearClusterId(newRegionCluster, region);
 
                     if (newClusterId == null) {
                         newClusterId = clusterIdCounter;
@@ -198,7 +195,7 @@ class ClusterAggregator {
                     }
                 }
 
-                newRegionCluster.put(vector, newClusterId);
+                newRegionCluster.put(region, newClusterId);
             }
 
             if (newRegionCluster.equals(regionCluster)) {
@@ -207,38 +204,38 @@ class ClusterAggregator {
             regionCluster = newRegionCluster;
         }
 
-        calculateClusterRegion();
+        calculateClusterArea();
     }
 
-    private void calculateClusterRegion() {
-        clusterRegion.clear();
+    private void calculateClusterArea() {
+        clusterArea.clear();
         for (final Map.Entry<Vector, Integer> entry : regionCluster.entrySet()) {
-            final Vector vector = entry.getKey();
+            final Vector region = entry.getKey();
             final Integer clusterId = entry.getValue();
 
-            Region region = clusterRegion.get(vector);
-            if (region == null) {
-                region = new Region();
-                clusterRegion.put(clusterId, region);
+            Area area = clusterArea.get(region);
+            if (area == null) {
+                area = new Area();
+                clusterArea.put(clusterId, area);
             }
-            region.add(vector);
+            area.add(region);
         }
     }
 
-    private Integer findNearClusterId(RegionCluster regionCluster, Vector vector) {
-        final int x1 = vector.getBlockX() - searchDepth;
-        final int x2 = vector.getBlockX() + searchDepth;
-        final int y1 = vector.getBlockY() - searchDepth;
-        final int y2 = vector.getBlockY() + searchDepth;
-        final int z1 = vector.getBlockZ() - searchDepth;
-        final int z2 = vector.getBlockZ() + searchDepth;
+    private Integer findNearClusterId(RegionCluster regionCluster, Vector region) {
+        final int x1 = region.getBlockX() - searchDepth;
+        final int x2 = region.getBlockX() + searchDepth;
+        final int y1 = region.getBlockY() - searchDepth;
+        final int y2 = region.getBlockY() + searchDepth;
+        final int z1 = region.getBlockZ() - searchDepth;
+        final int z2 = region.getBlockZ() + searchDepth;
 
         for (int x = x1; x <= x2; x++) {
             for (int y = y1; y <= y2; y++) {
                 for (int z = z1; z <= z2; z++) {
-                    final Vector nearVector = new Vector(x, y, z);
-                    if (!nearVector.equals(vector)) {
-                        final Integer nearClusterId = regionCluster.get(nearVector);
+                    final Vector nearRegion = new Vector(x, y, z);
+                    if (!nearRegion.equals(region)) {
+                        final Integer nearClusterId = regionCluster.get(nearRegion);
                         if (nearClusterId != null) {
                             return nearClusterId;
                         }
@@ -250,9 +247,9 @@ class ClusterAggregator {
         return null;
     }
 
-    boolean isRegionLoaded(Vector vector) {
-        final int x = vector.getBlockX() * scale.getBlockX();
-        final int z = vector.getBlockZ() * scale.getBlockZ();
+    boolean isRegionLoaded(Vector region) {
+        final int x = region.getBlockX() * scale.getBlockX();
+        final int z = region.getBlockZ() * scale.getBlockZ();
         return isBlockLoaded(x, z)
                 && isBlockLoaded(x + scale.getBlockX() - 1, z + scale.getBlockZ() - 1);
     }
@@ -261,7 +258,7 @@ class ClusterAggregator {
         return world.isChunkLoaded(x >> 4, z >> 4);
     }
 
-    Vector getNormalizedVector(Vector vector) {
+    Vector getRegion(Vector vector) {
         return new Vector(
                 vector.getBlockX() / scale.getBlockX(),
                 vector.getBlockY() / scale.getBlockY(),

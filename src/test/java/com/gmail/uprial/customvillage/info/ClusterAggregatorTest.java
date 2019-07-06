@@ -33,7 +33,7 @@ public class ClusterAggregatorTest {
     }
 
     @Test
-    public void testGetNormalizedVector() throws Exception {
+    public void testGetRegion() throws Exception {
         List<Vector> list = new ArrayList<Vector>() {{
             add(new Vector(1, 1, 1));
             add(new Vector(0, 0, 0));
@@ -59,7 +59,7 @@ public class ClusterAggregatorTest {
 
         for (int i = 0; i < list.size() / 2; i++) {
             assertEquals(list.get(i * 2 + 1).toString(),
-                    aggregator.getNormalizedVector(list.get(i * 2)).toString());
+                    aggregator.getRegion(list.get(i * 2)).toString());
         }
     }
 
