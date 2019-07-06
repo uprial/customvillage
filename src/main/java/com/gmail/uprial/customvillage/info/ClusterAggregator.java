@@ -8,6 +8,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.util.Vector;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -75,24 +76,14 @@ class ClusterAggregator {
             throw new VillageInfoError(String.format("Cluster #%d not found.", clusterId));
         }
 
-        final Set<Vector> nearRegion = new HashSet<>();
+        final Set<Vector> nearRegions = new HashSet<>();
         for (final Vector region : area) {
-            final int x1 = region.getBlockX() - searchDepth;
-            final int x2 = region.getBlockX() + searchDepth;
-            final int y1 = region.getBlockY() - searchDepth;
-            final int y2 = region.getBlockY() + searchDepth;
-            final int z1 = region.getBlockZ() - searchDepth;
-            final int z2 = region.getBlockZ() + searchDepth;
-            for (int x = x1; x <= x2; x++) {
-                for (int y = y1; y <= y2; y++) {
-                    for (int z = z1; z <= z2; z++) {
-                        nearRegion.add(new Vector(x, y, z));
-                    }
-                }
-            }
+            fetchNearRegions(region, (nearRegion) -> {
+                nearRegions.add(nearRegion);
+            });
         }
 
-        for (final Vector region : nearRegion) {
+        for (final Vector region : nearRegions) {
             final int x1 = (region.getBlockX()) * scale.getBlockX();
             final int x2 = (region.getBlockX() + 1) * scale.getBlockX() - 1;
             final int y1 = (region.getBlockY()) * scale.getBlockY();
@@ -186,7 +177,7 @@ class ClusterAggregator {
                     // Try to find the nearest cluster.
                     newClusterId = findNearClusterId(newRegionCluster, region);
 
-                    if (newClusterId == null) {
+                    if (newClusterId == -1) {
                         newClusterId = maxClusterId + 1;
                     }
                 }
@@ -227,26 +218,38 @@ class ClusterAggregator {
         final int z1 = region.getBlockZ() - searchDepth;
         final int z2 = region.getBlockZ() + searchDepth;
 
-        Integer minNearClusterId = null;
-        for (int x = x1; x <= x2; x++) {
-            for (int y = y1; y <= y2; y++) {
-                for (int z = z1; z <= z2; z++) {
-                    final Vector nearRegion = new Vector(x, y, z);
-                    if (!nearRegion.equals(region)) {
-                        final Integer nearClusterId = regionCluster.get(nearRegion);
-                        if (nearClusterId != null) {
-                            if(minNearClusterId == null) {
-                                minNearClusterId = nearClusterId;
-                            } else {
-                                minNearClusterId = Math.min(minNearClusterId, nearClusterId);
-                            }
-                        }
+        AtomicInteger minNearClusterId = new AtomicInteger(-1);
+        fetchNearRegions(region, (nearRegion) -> {
+            if (!nearRegion.equals(region)) {
+                final Integer nearClusterId = regionCluster.get(nearRegion);
+                if (nearClusterId != null) {
+                    if(minNearClusterId.get() == -1) {
+                        minNearClusterId.set(nearClusterId);
+                    } else {
+                        minNearClusterId.set(Math.min(minNearClusterId.get(), nearClusterId));
                     }
                 }
             }
-        }
+        });
 
-        return minNearClusterId;
+        return minNearClusterId.get();
+    }
+
+    private void fetchNearRegions(Vector region, Consumer<Vector> consumer) {
+        final int x1 = region.getBlockX() - searchDepth;
+        final int x2 = region.getBlockX() + searchDepth;
+        final int y1 = region.getBlockY() - searchDepth;
+        final int y2 = region.getBlockY() + searchDepth;
+        final int z1 = region.getBlockZ() - searchDepth;
+        final int z2 = region.getBlockZ() + searchDepth;
+
+        for (int x = x1; x <= x2; x++) {
+            for (int y = y1; y <= y2; y++) {
+                for (int z = z1; z <= z2; z++) {
+                    consumer.accept(new Vector(x, y, z));
+                }
+            }
+        }
     }
 
     boolean isRegionLoaded(Vector region) {
