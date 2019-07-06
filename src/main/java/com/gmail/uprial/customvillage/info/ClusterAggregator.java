@@ -12,9 +12,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 class ClusterAggregator {
-    private class Population extends ArrayList<Vector> {
-    }
-    private class PopulationMap extends HashMap<Vector, Population> {
+    private class PopulationMap extends HashSet<Vector> {
     }
 
     private class RegionCluster extends HashMap<Vector, Integer> {
@@ -49,16 +47,11 @@ class ClusterAggregator {
     <T extends Entity> void populate(Collection<T> entities) {
         final PopulationMap populationMap = new PopulationMap();
 
-        for (Entity entity : entities) {
+        for (final Entity entity : entities) {
             final Vector vector = entity.getLocation().toVector();
             final Vector normalizedVector = getNormalizedVector(vector);
 
-            Population population = populationMap.get(normalizedVector);
-            if (population == null) {
-                population = new Population();
-                populationMap.put(normalizedVector, population);
-            }
-            population.add(vector);
+            populationMap.add(normalizedVector);
         }
 
         optimize(populationMap);
@@ -191,28 +184,21 @@ class ClusterAggregator {
             // Start from the unloaded regions.
             final RegionCluster newRegionCluster = new RegionCluster(unloadedRegionCluster);
 
-            for (final Map.Entry<Vector, Population> entry : populationMap.entrySet()) {
-                final Population population = entry.getValue();
+            for (final Vector vector : populationMap) {
+                // Try to find the original ClusterId. Assume that origRegionCluster is always optimized and does not to be simplified.
+                Integer newClusterId = origRegionCluster.get(vector);
 
-                // If there are some entities...
-                if (!population.isEmpty()) {
-                    final Vector vector = entry.getKey();
+                if(newClusterId == null) {
+                    // Try to find the nearest cluster.
+                    newClusterId = findNearClusterId(newRegionCluster, vector);
 
-                    // Try to find the original ClusterId. Assume that origRegionCluster is always optimized and does not to be simplified.
-                    Integer newClusterId = origRegionCluster.get(vector);
-
-                    if(newClusterId == null) {
-                        // Try to find the nearest cluster.
-                        newClusterId = findNearClusterId(newRegionCluster, vector);
-
-                        if (newClusterId == null) {
-                            newClusterId = clusterIdCounter;
-                            clusterIdCounter++;
-                        }
+                    if (newClusterId == null) {
+                        newClusterId = clusterIdCounter;
+                        clusterIdCounter++;
                     }
-
-                    newRegionCluster.put(vector, newClusterId);
                 }
+
+                newRegionCluster.put(vector, newClusterId);
             }
 
             if (newRegionCluster.equals(regionCluster)) {
