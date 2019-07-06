@@ -160,33 +160,38 @@ class ClusterAggregator {
                 unloadedMaxClusterId = Math.max(unloadedMaxClusterId, clusterId);
             }
         }
+
         // In order to keep the stable ClusterId distribution, we need to keep the original ids when it's possible.
         final RegionCluster origRegionCluster = new RegionCluster(regionCluster);
         boolean isFixed = false;
         while (!isFixed) {
             // Start from the unloadedMaxClusterId.
             int maxClusterId = unloadedMaxClusterId;
+            final Set<Integer> newClusterIds = new HashSet<>();
 
             for (final Vector region : populationMap) {
-                // Try to find the original ClusterId. Assume that origRegionCluster is always optimized and does not to be simplified.
-                Integer newClusterId = origRegionCluster.get(region);
+                Integer newClusterId;
+                // Try to find the nearest cluster.
+                newClusterId = findNearClusterId(newRegionCluster, region);
 
-                if(newClusterId == null) {
-                    // Try to find the nearest cluster.
-                    newClusterId = findNearClusterId(newRegionCluster, region);
+                if (newClusterId == null) {
+                    // Try to find the original ClusterId.
+                    newClusterId = origRegionCluster.get(region);
 
-                    if (newClusterId == -1) {
+                    if ((newClusterId == null) || (newClusterIds.contains(newClusterId))) {
                         newClusterId = maxClusterId + 1;
                     }
                 }
 
-                maxClusterId = Math.max(maxClusterId, newClusterId);
                 newRegionCluster.put(region, newClusterId);
+                maxClusterId = Math.max(maxClusterId, newClusterId);
+                newClusterIds.add(newClusterId);
             }
 
             if (newRegionCluster.equals(regionCluster)) {
                 isFixed = true;
             }
+            // Copy newRegionCluster to change it safely.
             regionCluster = new RegionCluster(newRegionCluster);
         }
 
@@ -209,13 +214,6 @@ class ClusterAggregator {
     }
 
     private Integer findNearClusterId(RegionCluster regionCluster, Vector region) {
-        final int x1 = region.getBlockX() - searchDepth;
-        final int x2 = region.getBlockX() + searchDepth;
-        final int y1 = region.getBlockY() - searchDepth;
-        final int y2 = region.getBlockY() + searchDepth;
-        final int z1 = region.getBlockZ() - searchDepth;
-        final int z2 = region.getBlockZ() + searchDepth;
-
         AtomicInteger minNearClusterId = new AtomicInteger(-1);
         fetchNearRegions(region, (nearRegion) -> {
             if (!nearRegion.equals(region)) {
@@ -230,7 +228,11 @@ class ClusterAggregator {
             }
         });
 
-        return minNearClusterId.get();
+        if (minNearClusterId.get() == -1) {
+            return null;
+        } else {
+            return minNearClusterId.get();
+        }
     }
 
     private void fetchNearRegions(Vector region, Consumer<Vector> consumer) {

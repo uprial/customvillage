@@ -116,6 +116,25 @@ public class ClusterAggregatorTest {
     }
 
     @Test
+    public void testTwoGroupIterationsStable() throws Exception {
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(1, 1, 1));
+            add(new Vector(4, 1, 1));
+            add(new Vector(2, 1, 1));
+            add(new Vector(3, 1, 1));
+        }});
+        assertEquals("{1:1:1=1, 4:1:1=1, 3:1:1=1, 2:1:1=1}", aggregator.getDump().toString());
+
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(3, 1, 1));
+            add(new Vector(2, 1, 1));
+            add(new Vector(4, 1, 1));
+            add(new Vector(1, 1, 1));
+        }});
+        assertEquals("{1:1:1=1, 4:1:1=1, 3:1:1=1, 2:1:1=1}", aggregator.getDump().toString());
+    }
+
+    @Test
     public void testThreeGroupIterations() throws Exception {
         aggregator.populate(new PopulationMap() {{
             add(new Vector(1, 1, 1));
@@ -200,7 +219,7 @@ public class ClusterAggregatorTest {
     }
 
     @Test
-    public void testStableMergeWithLowerId() throws Exception {
+    public void testStableEvictionOfIdInTheMiddle() throws Exception {
         aggregator.populate(new PopulationMap() {{
             add(new Vector(1, 1, 1));
             add(new Vector(4, 4, 4));
@@ -213,5 +232,37 @@ public class ClusterAggregatorTest {
             add(new Vector(4, 4, 4));
         }});
         assertEquals("{1:1:1=2, 4:4:4=3}", aggregator.getDump().toString());
+    }
+
+    @Test
+    public void testStableEvictionOfRegionInTheMiddle() throws Exception {
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(4, 4, 4));
+            add(new Vector(5, 5, 5));
+            add(new Vector(6, 6, 6));
+        }});
+        assertEquals("{6:6:6=1, 5:5:5=1, 4:4:4=1}", aggregator.getDump().toString());
+
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(4, 4, 4));
+            add(new Vector(6, 6, 6));
+        }});
+        assertEquals("{6:6:6=1, 4:4:4=2}", aggregator.getDump().toString());
+    }
+
+    @Test
+    public void testStableAppearanceOfRegionInTheMiddle() throws Exception {
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(2, 2, 2));
+            add(new Vector(4, 4, 4));
+        }});
+        assertEquals("{2:2:2=1, 4:4:4=2}", aggregator.getDump().toString());
+
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(2, 2, 2));
+            add(new Vector(3, 3, 3));
+            add(new Vector(4, 4, 4));
+        }});
+        assertEquals("{2:2:2=1, 3:3:3=1, 4:4:4=1}", aggregator.getDump().toString());
     }
 }
