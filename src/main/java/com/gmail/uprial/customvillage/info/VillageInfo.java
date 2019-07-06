@@ -7,10 +7,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Bed;
-import org.bukkit.entity.Cat;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.IronGolem;
-import org.bukkit.entity.Villager;
+import org.bukkit.entity.*;
 import org.bukkit.util.Vector;
 
 import java.util.*;
@@ -21,15 +18,7 @@ import static com.gmail.uprial.customvillage.common.Formatter.format;
 
 public class VillageInfo {
     private static final int LOST_VILLAGE_ID = -1;
-    private class Village {
-        final List<Villager> villagers = new ArrayList<>();
-        final List<IronGolem> ironGolems = new ArrayList<>();
-        final List<Cat> cats = new ArrayList<>();
-        final List<Block> bedHeads = new ArrayList<>();
 
-        Village() {
-        }
-    }
     private class Villages extends HashMap<Integer,Village> {
 
     }
@@ -40,11 +29,6 @@ public class VillageInfo {
     private static final int PLAIN_MAP_SCALE = 8;
     private static final Vector CLUSTER_SCALE = new Vector(32, 5, 32);
     private static final int CLUSTER_SEARCH_DEPTH = 1;
-
-    // https://minecraft.gamepedia.com/Cat
-    private static final int MAX_CATS = 10;
-    // https://minecraft.gamepedia.com/Iron_Golem
-    private static final int VILLAGERS_PER_GOLEM = 4;
 
     private final CustomVillage plugin;
     private final CustomLogger customLogger;
@@ -59,31 +43,53 @@ public class VillageInfo {
     }
 
     public void save() {
-        measureTime(() -> {
-            for (World world : plugin.getServer().getWorlds()) {
-                getStorage(world).save(getOrCreateAggregator(world).getDump());
-            }
-            return null;
-        }, (time) -> customLogger.debug(String.format("Village info has been saved in %dms.", time)));
+        forEachWorld((world -> getStorage(world).save(getOrCreateAggregator(world).getDump())),
+                "Village info has been saved");
     }
 
     public void update() {
-        measureTime(() -> {
-            for (World world : plugin.getServer().getWorlds()) {
-                getVillages(world);
-            }
-            return null;
-        }, (time) -> customLogger.debug(String.format("Village info has been updated in %dms.", time)));
+        forEachWorld((this::getVillages),
+                "Village info has been updated");
     }
 
     public void optimize() {
+        forEachWorld((this::optimizeWorld),
+                "Villages have been optimized");
+    }
+
+    private static final Set<EntityType> interestingEntityTypes = new HashSet<EntityType>() {{
+       add(EntityType.VILLAGER);
+       add(EntityType.IRON_GOLEM);
+       add(EntityType.CAT);
+    }};
+
+    public boolean isEntityAllowed(Entity entity) {
+        if(interestingEntityTypes.contains(entity.getType())) {
+            final ClusterAggregator aggregator = getOrCreateAggregator(entity.getWorld());
+            Integer villageId = aggregator.getEntityClusterId(entity);
+            if(villageId != null) {
+                Village village = getOrCreateVillages(entity.getWorld()).get(villageId);
+                if(entity.getType().equals(EntityType.VILLAGER)) {
+                    return village.villagers.size() < village.getVillagersLimit();
+                } else if(entity.getType().equals(EntityType.IRON_GOLEM)) {
+                    return village.ironGolems.size() < village.getIronGolemsLimit();
+                } else if(entity.getType().equals(EntityType.CAT)) {
+                    return village.cats.size() < village.getCatsLimit();
+                }
+            }
+        }
+        return true;
+    }
+
+    private void forEachWorld(Consumer<World> consumer, String whatHasBeenDone) {
         measureTime(() -> {
             for (World world : plugin.getServer().getWorlds()) {
-                optimizeWorld(world);
+                consumer.accept(world);
             }
             return null;
-        }, (time) -> customLogger.debug(String.format("Villages have been optimized in %dms.", time)));
+        }, (time) -> customLogger.debug(String.format("%s in %dms.", whatHasBeenDone, time)));
     }
+
 
     private CustomStorage getStorage(World world) {
         final String filename = String.format("%s_villages.txt", world.getName());
@@ -162,28 +168,50 @@ public class VillageInfo {
         return villages;
     }
 
-    private <T extends Entity> void optimizeEntities(List<T> entities, int limit, Function<T,Boolean> function, String title) {
+    private <T extends Entity> int optimizeEntities(final List<T> entities, final int limit,
+                                                     final Function<T,Boolean> function, String title) {
+        int removed = 0;
+        if(!title.isEmpty()) {
+            title = " " + title;
+        }
+
         int i = 0;
         while((i < entities.size() && (entities.size() > limit))) {
             final T entity = entities.get(i);
             if (function.apply(entity)) {
-                customLogger.debug(String.format("Removing an excessive %s %s", title, format(entity)));
+                customLogger.debug(String.format("Removing an excessive%s %s", title, format(entity)));
                 entities.remove(i);
                 entity.remove();
+                removed++;
             } else {
                 i++;
             }
         }
+
+        return removed;
     }
 
-    private <T extends Entity> void removeEntities(List<T> entities) {
+    private <T extends Entity> int removeEntities(List<T> entities) {
+        int removed = 0;
         for (final T entity : entities) {
             customLogger.debug(String.format("Removing a lost %s", format(entity)));
             entity.remove();
+            removed++;
         }
+
+        return removed;
     }
 
     private void optimizeWorld(World world) {
+        int tries = 3;
+        while ((tries > 0) && (optimizeWorldOnce(world) > 0)) {
+            tries--;
+        }
+    }
+
+    private int optimizeWorldOnce(World world) {
+        int removed = 0;
+
         final ClusterAggregator aggregator = getOrCreateAggregator(world);
         final Villages villages = getVillages(world);
         final Village lostVillage = villages.get(LOST_VILLAGE_ID);
@@ -192,49 +220,53 @@ public class VillageInfo {
             customLogger.warning(String.format("Something went completely wrong and we lost a %s", format(villager)));
         }
 
-        removeEntities(lostVillage.ironGolems);
-        removeEntities(lostVillage.cats);
+        removed += removeEntities(lostVillage.ironGolems);
+        removed += removeEntities(lostVillage.cats);
 
-        for (final Map.Entry<Integer,Village> entry : villages.entrySet()) {
+        for (final Map.Entry<Integer, Village> entry : villages.entrySet()) {
             final Integer villageId = entry.getKey();
-            if(villageId.equals(LOST_VILLAGE_ID)) {
+            if (villageId.equals(LOST_VILLAGE_ID)) {
                 // do nothing
-            } else if(!aggregator.isFullyLoaded(villageId)) {
+            } else if (!aggregator.isFullyLoaded(villageId)) {
                 customLogger.debug(String.format("Village #%d is not fully loaded", villageId));
             } else {
                 final Village village = entry.getValue();
 
                 // Optimize villages
-                int villagersLimit = village.bedHeads.size();
-                if (village.villagers.size() > villagersLimit) {
-                    customLogger.info(String.format("Only %d villager(s) have beds, the excessive %d villager(s) will be removed",
-                            villagersLimit, village.villagers.size() - villagersLimit));
+                if (village.villagers.size() > village.getVillagersLimit()) {
+                    customLogger.info(String.format("Only %d villager(s) in village #%d have beds, the excessive %d villager(s) will be removed",
+                            village.getVillagersLimit(), villageId, village.villagers.size() - village.getVillagersLimit()));
 
-                    optimizeEntities(village.villagers, villagersLimit, (villager) -> !villager.isAdult(), "baby");
-                    optimizeEntities(village.villagers, villagersLimit, (villager) -> villager.getProfession().equals(Villager.Profession.NITWIT), "nitwit");
-                    optimizeEntities(village.villagers, villagersLimit, (villager) -> villager.getProfession().equals(Villager.Profession.NONE), "unemployed");
-                    optimizeEntities(village.villagers, villagersLimit, (villager) -> true, "");
+                    removed += optimizeEntities(village.villagers, village.getVillagersLimit(),
+                            (villager) -> !villager.isAdult(), "baby");
+                    removed += optimizeEntities(village.villagers, village.getVillagersLimit(),
+                            (villager) -> villager.getProfession().equals(Villager.Profession.NITWIT), "nitwit");
+                    removed += optimizeEntities(village.villagers, village.getVillagersLimit(),
+                            (villager) -> villager.getProfession().equals(Villager.Profession.NONE), "unemployed");
+                    removed += optimizeEntities(village.villagers, village.getVillagersLimit(),
+                            (villager) -> true, "");
                 }
 
-                // Optimize vars
-                if (village.cats.size() > MAX_CATS) {
-                    customLogger.info(String.format("Too many cats (>%d), the excessive %d cat(s) will be removed",
-                            MAX_CATS, village.cats.size() - MAX_CATS));
+                // Optimize cats
+                if (village.cats.size() > village.getCatsLimit()) {
+                    customLogger.info(String.format("Too many cats (>%d) in village #%d, the excessive %d cat(s) will be removed",
+                            village.getCatsLimit(), villageId, village.cats.size() - village.getCatsLimit()));
 
-                    optimizeEntities(village.cats, MAX_CATS, (cat) -> !cat.isAdult(), "baby");
-                    optimizeEntities(village.cats, MAX_CATS, (cat) -> true, "");
+                    removed += optimizeEntities(village.cats, village.getCatsLimit(), (cat) -> !cat.isAdult(), "baby");
+                    removed += optimizeEntities(village.cats, village.getCatsLimit(), (cat) -> true, "");
                 }
 
-                // Optimize iron goles
-                int ironGolemsLimit = village.villagers.size() / VILLAGERS_PER_GOLEM;
-                if (village.ironGolems.size() > village.villagers.size() / VILLAGERS_PER_GOLEM) {
-                    customLogger.info(String.format("Only %d iron golem(s) have support of villages, the excessive %d iron golem(s) will be removed",
-                            ironGolemsLimit, village.ironGolems.size() - ironGolemsLimit));
+                // Optimize iron golems
+                if (village.ironGolems.size() > village.getIronGolemsLimit()) {
+                    customLogger.info(String.format("Only %d iron golem(s) in village #%d have support of villages, the excessive %d iron golem(s) will be removed",
+                            village.getIronGolemsLimit(), villageId, village.ironGolems.size() - village.getIronGolemsLimit()));
 
-                    optimizeEntities(village.ironGolems, ironGolemsLimit, (ironGolem) -> true, "");
+                    removed += optimizeEntities(village.ironGolems, village.getIronGolemsLimit(), (ironGolem) -> true, "");
                 }
             }
         }
+
+        return removed;
     }
 
     public List<String> getTextLines() {
@@ -244,9 +276,15 @@ public class VillageInfo {
                 final Collection<Villager> entities = world.getEntitiesByClass(Villager.class);
                 if (!entities.isEmpty()) {
                     lines.add(String.format("==== World '%s' ====", world.getName()));
+                    Villages villages = getVillages(world);
+
+                    final Village lostVillage = villages.get(LOST_VILLAGE_ID);
+                    lines.add(String.format("Lost Villagers: %d", lostVillage.villagers.size()));
+                    lines.add(String.format("Lost Iron Golems: %d", lostVillage.ironGolems.size()));
+                    lines.add(String.format("Lost Cats: %d", lostVillage.cats.size()));
                     lines.addAll(getViewTextLines(entities));
 
-                    for (final Map.Entry<Integer, Village> entry : getVillages(world).entrySet()) {
+                    for (final Map.Entry<Integer, Village> entry : villages.entrySet()) {
                         final Integer villageId = entry.getKey();
                         if(!villageId.equals(LOST_VILLAGE_ID)) {
                             final Village village = entry.getValue();

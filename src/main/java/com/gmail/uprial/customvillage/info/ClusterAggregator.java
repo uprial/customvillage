@@ -56,6 +56,10 @@ class ClusterAggregator {
         return clusterArea.keySet();
     }
 
+    <T extends Entity> Integer getEntityClusterId(T entity) {
+        return regionCluster.get(getRegion(entity.getLocation().toVector()));
+    }
+
     <T extends Entity> List<T> fetchEntities(Class<T> tClass, BiConsumer<Integer,T> consumer) {
         List<T> lostEntities = new ArrayList<>();
         for (final T entity : world.getEntitiesByClass(tClass)) {

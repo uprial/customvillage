@@ -3,8 +3,10 @@ package com.gmail.uprial.customvillage;
 import com.gmail.uprial.customvillage.common.CustomLogger;
 import com.gmail.uprial.customvillage.config.InvalidConfigException;
 import com.gmail.uprial.customvillage.info.VillageInfo;
+import com.gmail.uprial.customvillage.listeners.CustomVillageBreedingEventListener;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Entity;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -37,17 +39,13 @@ public final class CustomVillage extends JavaPlugin {
 
         taskPeriodicSave = new TaskPeriodicSave(this).runTaskTimer();
         taskPeriodicUpdate = new TaskPeriodicUpdate(this).runTaskTimer();
-        //getServer().getPluginManager().registerEvents(new CustomVillageAttackEventListener(this, consoleLogger), this);
+        getServer().getPluginManager().registerEvents(new CustomVillageBreedingEventListener(this, consoleLogger), this);
 
         getCommand(COMMAND_NS).setExecutor(new CustomVillageCommandExecutor(this));
         consoleLogger.info("Plugin enabled");
     }
 
-    public CustomVillageConfig getCustomVillageConfig() {
-        return customVillageConfig;
-    }
-
-    public void reloadConfig(CustomLogger userLogger) {
+    void reloadConfig(CustomLogger userLogger) {
         reloadConfig();
         customVillageConfig = loadConfig(getConfig(), userLogger, consoleLogger);
     }
@@ -76,23 +74,29 @@ public final class CustomVillage extends JavaPlugin {
         return YamlConfiguration.loadConfiguration(configFile);
     }
 
-    public List<String> getVillageInfoTextLines() {
+    List<String> getVillageInfoTextLines() {
         return villageInfo.getTextLines();
     }
 
-    public void saveInfo() {
+    void saveInfo() {
         villageInfo.save();
     }
 
-    public void updateInfo() {
-        villageInfo.update();
+    void updateInfo() {
+        if(customVillageConfig.isEnabled()) {
+            villageInfo.update();
+        }
     }
 
-    public void optimize() {
+    void optimize() {
         villageInfo.optimize();
     }
 
-    static CustomVillageConfig loadConfig(FileConfiguration config, CustomLogger customLogger) {
+    public boolean isEntityAllowed(Entity entity) {
+        return villageInfo.isEntityAllowed(entity);
+    }
+
+    private static CustomVillageConfig loadConfig(FileConfiguration config, CustomLogger customLogger) {
         return loadConfig(config, customLogger, null);
     }
 
