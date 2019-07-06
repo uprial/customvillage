@@ -16,7 +16,8 @@ I ended up with a mess of hundreds of illegal entities on the map. Fortunately, 
 
 ## Features
 
-* Detect villages and limit villagers population considering the beds' count
+* Detect villages based on locations of villagers
+* Calculate a number of beds in the villages and limit villagers population considering the beds
 * Limit population of cats (not tamed) and iron golems (non-player created) strongly according to the documentation
 
 ## Commands
