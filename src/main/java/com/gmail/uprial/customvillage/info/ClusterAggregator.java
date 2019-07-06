@@ -78,9 +78,7 @@ class ClusterAggregator {
 
         final Set<Vector> nearRegions = new HashSet<>();
         for (final Vector region : area) {
-            fetchNearRegions(region, (nearRegion) -> {
-                nearRegions.add(nearRegion);
-            });
+            fetchNearRegions(region, nearRegions::add);
         }
 
         for (final Vector region : nearRegions) {

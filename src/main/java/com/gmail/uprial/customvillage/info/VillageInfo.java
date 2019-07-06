@@ -27,8 +27,8 @@ public class VillageInfo {
         Village() {
         }
     }
-    public interface Func {
-        void call();
+    public interface Func<T> {
+        T call();
     }
 
     private static final int PLAIN_MAP_SCALE = 8;
@@ -55,6 +55,7 @@ public class VillageInfo {
             for (World world : plugin.getServer().getWorlds()) {
                 getStorage(world).save(getOrCreateAggregator(world).getDump());
             }
+            return null;
         }, (time) -> customLogger.debug(String.format("Village info has been saved in %dms.", time)));
     }
 
@@ -63,6 +64,7 @@ public class VillageInfo {
             for (World world : plugin.getServer().getWorlds()) {
                 getVillages(world);
             }
+            return null;
         }, (time) -> customLogger.debug(String.format("Village info has been updated in %dms.", time)));
     }
 
@@ -160,51 +162,54 @@ public class VillageInfo {
     }
 
     public List<String> getTextLines() {
-        final List<String> lines = new ArrayList<>();
-        for(World world : plugin.getServer().getWorlds()) {
-            final Collection<Villager> entities = world.getEntitiesByClass(Villager.class);
-            if(!entities.isEmpty()) {
-                final PlainMapViewer viewer = new PlainMapViewer(PLAIN_MAP_SCALE);
-                for (Villager entity : entities) {
-                    Location location = entity.getLocation();
-                    viewer.add(location.getBlockX(), location.getBlockZ());
-                }
-                lines.add(String.format("==== World '%s' ====", world.getName()));
-                lines.addAll(viewer.getTextLines());
+        return measureTime(() -> {
+            final List<String> lines = new ArrayList<>();
+            for (World world : plugin.getServer().getWorlds()) {
+                final Collection<Villager> entities = world.getEntitiesByClass(Villager.class);
+                if (!entities.isEmpty()) {
+                    final PlainMapViewer viewer = new PlainMapViewer(PLAIN_MAP_SCALE);
+                    for (Villager entity : entities) {
+                        Location location = entity.getLocation();
+                        viewer.add(location.getBlockX(), location.getBlockZ());
+                    }
+                    lines.add(String.format("==== World '%s' ====", world.getName()));
+                    lines.addAll(viewer.getTextLines());
 
-                Map<Integer,Village> villages = getVillages(world);
-                for (Map.Entry<Integer,Village> entry : villages.entrySet()) {
-                    final Integer villageId = entry.getKey();
-                    final Village village = entry.getValue();
+                    Map<Integer, Village> villages = getVillages(world);
+                    for (Map.Entry<Integer, Village> entry : villages.entrySet()) {
+                        final Integer villageId = entry.getKey();
+                        final Village village = entry.getValue();
 
-                    lines.add(String.format("== World '%s', village #%d ==", world.getName(), villageId));
-                    lines.add(String.format("  Villagers: %d", village.villagers.size()));
-                    lines.add(String.format("  Iron Golems: %d", village.ironGolems.size()));
-                    lines.add(String.format("  Cats: %d", village.cats.size()));
-                    lines.add(String.format("  Beds: %d", village.bedHeads.size()));
-                    if(!village.villagers.isEmpty()) {
-                        final PlainMapViewer villageViewer = new PlainMapViewer(PLAIN_MAP_SCALE);
-                        for (Villager entity : village.villagers) {
-                            villageViewer.add(entity.getLocation().getBlockX(), entity.getLocation().getBlockZ());
+                        lines.add(String.format("== World '%s', village #%d ==", world.getName(), villageId));
+                        lines.add(String.format("  Villagers: %d", village.villagers.size()));
+                        lines.add(String.format("  Iron Golems: %d", village.ironGolems.size()));
+                        lines.add(String.format("  Cats: %d", village.cats.size()));
+                        lines.add(String.format("  Beds: %d", village.bedHeads.size()));
+                        if (!village.villagers.isEmpty()) {
+                            final PlainMapViewer villageViewer = new PlainMapViewer(PLAIN_MAP_SCALE);
+                            for (Villager entity : village.villagers) {
+                                villageViewer.add(entity.getLocation().getBlockX(), entity.getLocation().getBlockZ());
+                            }
+                            lines.addAll(villageViewer.getTextLines());
                         }
-                        lines.addAll(villageViewer.getTextLines());
                     }
                 }
             }
-        }
 
-        return lines;
+            return lines;
+        }, (time) -> customLogger.debug(String.format("Village info has been gathered in %dms.", time)));
     }
 
-    private void measureTime(Func func, Consumer<Long> consumer) {
+    private <T> T measureTime(Func<T> func, Consumer<Long> consumer) {
         long startTime = 0;
         if(customLogger.isDebugMode()) {
             startTime = System.currentTimeMillis();
         }
-        func.call();
+        T result = func.call();
         if(customLogger.isDebugMode()) {
             long endTime = System.currentTimeMillis();
             consumer.accept(endTime - startTime);
         }
+        return result;
     }
 }
