@@ -66,9 +66,13 @@ public class VillageInfo {
     public boolean isEntityAllowed(Entity entity) {
         if(interestingEntityTypes.contains(entity.getType())) {
             final ClusterAggregator aggregator = getOrCreateAggregator(entity.getWorld());
-            Integer villageId = aggregator.getEntityClusterId(entity);
-            if(villageId != null) {
-                Village village = getOrCreateVillages(entity.getWorld()).get(villageId);
+            final Integer villageId = aggregator.getEntityClusterId(entity);
+            if(villageId == null) {
+                // This is a pretty questionable approach, to restrict spawn in areas not considered as villages.
+                // But otherwise, cats and iron golems will spread outside of the village.
+                return false;
+            } else {
+                final Village village = getOrCreateVillages(entity.getWorld()).get(villageId);
                 if(entity.getType().equals(EntityType.VILLAGER)) {
                     return village.villagers.size() < village.getVillagersLimit();
                 } else if(entity.getType().equals(EntityType.IRON_GOLEM)) {
