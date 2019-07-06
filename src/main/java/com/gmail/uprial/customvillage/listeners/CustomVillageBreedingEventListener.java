@@ -27,9 +27,12 @@ public class CustomVillageBreedingEventListener implements Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     public void onEntityBreedEvent(EntityBreedEvent event) {
         if(!event.isCancelled() && plugin.isEnabled()) {
+            // event.getEntity() will return an entity with zero coordinates which won't be applicable for the check.
             if (!plugin.isEntityAllowed(event.getMother())) {
-                customLogger.debug(String.format("Breeding of %s with mother %s and father %s is not allowed",
-                        format(event.getEntity()), format(event.getMother()), format(event.getFather())));
+                if(customLogger.isDebugMode()) {
+                    customLogger.debug(String.format("Breeding of %s with mother %s and father %s is not allowed",
+                            format(event.getEntity()), format(event.getMother()), format(event.getFather())));
+                }
                 event.setCancelled(true);
             }
         }
@@ -38,11 +41,15 @@ public class CustomVillageBreedingEventListener implements Listener {
     @SuppressWarnings("unused")
     @EventHandler(priority = EventPriority.NORMAL)
     public void onCreatureSpawnEvent(CreatureSpawnEvent event) {
+        customLogger.debug(String.format("Spawning of %s due to %s...",
+                format(event.getEntity()), event.getSpawnReason()));
         if(!event.isCancelled() && plugin.isEnabled()) {
-            Entity entity = event.getEntity();
+            final Entity entity = event.getEntity();
             if (!plugin.isEntityAllowed(entity)) {
-                customLogger.debug(String.format("Spawn of %s due to %s is not allowed",
-                        format(entity), event.getSpawnReason()));
+                if(customLogger.isDebugMode()) {
+                    customLogger.debug(String.format("Spawn of %s due to %s is not allowed",
+                            format(entity), event.getSpawnReason()));
+                }
                 event.setCancelled(true);
             }
         }
