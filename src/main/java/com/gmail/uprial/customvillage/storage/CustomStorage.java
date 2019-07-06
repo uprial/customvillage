@@ -34,7 +34,7 @@ public class CustomStorage {
     }
 
     public StorageData load() {
-        File file = new File(getFileName());
+        final File file = new File(getFileName());
         if(file.exists()) {
             try {
                 return loadData();
@@ -64,8 +64,11 @@ public class CustomStorage {
                 }
             }
         } else {
-            if(!new File(filename).delete()) {
-                customLogger.error(String.format("Can't delete file %s", filename));
+            final File file = new File(filename);
+            if(file.exists()) {
+                if (!file.delete()) {
+                    customLogger.error(String.format("Can't delete file %s", filename));
+                }
             }
         }
     }
@@ -88,7 +91,7 @@ public class CustomStorage {
     }
 
     private String getFileName() {
-        File file = new File(dataFolder, fileName);
+        final File file = new File(dataFolder, fileName);
         return file.getPath();
     }
 
