@@ -112,7 +112,7 @@ public class ClusterAggregatorTest {
             add(new Vector(2, 1, 1));
             add(new Vector(3, 1, 1));
         }});
-        assertEquals("{1:1:1=1, 2:2:2=1}", aggregator.getDump().toString());
+        assertEquals("{1:1:1=1, 4:1:1=1, 3:1:1=1, 2:1:1=1}", aggregator.getDump().toString());
     }
 
     @Test
@@ -151,5 +151,38 @@ public class ClusterAggregatorTest {
             add(new Vector(3, 3, 3));
         }});
         assertEquals("{1:1:1=3, 6:6:6=2, 3:3:3=1}", aggregator.getDump().toString());
+    }
+
+    @Test
+    public void testStableClusterIdClearance() throws Exception {
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(3, 3, 3));
+            add(new Vector(6, 6, 6));
+        }});
+        assertEquals("{6:6:6=2, 3:3:3=1}", aggregator.getDump().toString());
+
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(1, 1, 1));
+            add(new Vector(3, 3, 3));
+        }});
+        assertEquals("{1:1:1=2, 3:3:3=1}", aggregator.getDump().toString());
+    }
+
+    @Test
+    public void testIntersectionOfUnloadedInSeveralIterations() throws Exception {
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(1, 1, 1));
+            add(new Vector(3, 3, 3));
+            add(new Vector(6, 6, 6));
+        }});
+        assertEquals("{1:1:1=3, 6:6:6=2, 3:3:3=1}", aggregator.getDump().toString());
+
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(1, 1, -1));
+            add(new Vector(1, 1, 0));
+            add(new Vector(1, 1, 2));
+            add(new Vector(1, 1, 3));
+        }});
+        assertEquals("{1:1:1=3, 1:1:-1=3, 1:1:0=3, 3:3:3=1, 1:1:3=3, 1:1:2=3}", aggregator.getDump().toString());
     }
 }

@@ -156,9 +156,9 @@ class ClusterAggregator {
     // ==== PRIVATE METHODS ====
 
     void populate(PopulationMap populationMap) {
-        // ClusterId is an auto-increment value, so we need to calculate the max existing id.
-        int initialMaxClusterId = 0;
         // Some regions aren't loaded, so we need to keep them in the database though there are no entities loaded there.
+        // ClusterId is an auto-increment value, so we need to calculate the max existing id.
+        int unloadedMaxClusterId = 0;
         final RegionCluster unloadedRegionCluster = new RegionCluster();
         for (final Map.Entry<Vector, Integer> entry : regionCluster.entrySet()) {
             final Vector region = entry.getKey();
@@ -166,16 +166,17 @@ class ClusterAggregator {
 
             if (!isRegionLoaded(region)) {
                 unloadedRegionCluster.put(region, clusterId);
-                initialMaxClusterId = Math.max(initialMaxClusterId, clusterId);
+                unloadedMaxClusterId = Math.max(unloadedMaxClusterId, clusterId);
             }
         }
         // In order to keep the stable ClusterId distribution, we need to keep the original ids when it's possible.
         final RegionCluster origRegionCluster = new RegionCluster(regionCluster);
+        // Start from the unloadedRegionCluster.
+        final RegionCluster newRegionCluster = new RegionCluster(unloadedRegionCluster);
         boolean isFixed = false;
         while (!isFixed) {
-            int maxClusterId = initialMaxClusterId;
-            // Start from the unloaded regions.
-            final RegionCluster newRegionCluster = new RegionCluster(unloadedRegionCluster);
+            // Start from the unloadedMaxClusterId.
+            int maxClusterId = unloadedMaxClusterId;
 
             for (final Vector region : populationMap) {
                 // Try to find the original ClusterId. Assume that origRegionCluster is always optimized and does not to be simplified.
@@ -226,6 +227,7 @@ class ClusterAggregator {
         final int z1 = region.getBlockZ() - searchDepth;
         final int z2 = region.getBlockZ() + searchDepth;
 
+        Integer minNearClusterId = null;
         for (int x = x1; x <= x2; x++) {
             for (int y = y1; y <= y2; y++) {
                 for (int z = z1; z <= z2; z++) {
@@ -233,14 +235,18 @@ class ClusterAggregator {
                     if (!nearRegion.equals(region)) {
                         final Integer nearClusterId = regionCluster.get(nearRegion);
                         if (nearClusterId != null) {
-                            return nearClusterId;
+                            if(minNearClusterId == null) {
+                                minNearClusterId = nearClusterId;
+                            } else {
+                                minNearClusterId = Math.min(minNearClusterId, nearClusterId);
+                            }
                         }
                     }
                 }
             }
         }
 
-        return null;
+        return minNearClusterId;
     }
 
     boolean isRegionLoaded(Vector region) {
