@@ -294,10 +294,10 @@ public class VillageInfo {
                             final Village village = entry.getValue();
 
                             lines.add(String.format("== World '%s', village #%d ==", world.getName(), villageId));
-                            lines.add(String.format("  Villagers: %d", village.villagers.size()));
-                            lines.add(String.format("  Iron Golems: %d", village.ironGolems.size()));
-                            lines.add(String.format("  Cats: %d", village.cats.size()));
                             lines.add(String.format("  Beds: %d", village.bedHeads.size()));
+                            lines.add(String.format("  Villagers: %d/%d", village.villagers.size(), village.getVillagersLimit()));
+                            lines.add(String.format("  Iron Golems: %d/%d", village.ironGolems.size(), village.getIronGolemsLimit()));
+                            lines.add(String.format("  Cats: %d/%d", village.cats.size(), village.getCatsLimit()));
                             if (!village.villagers.isEmpty()) {
                                 lines.addAll(getViewTextLines(village.villagers));
                             }
