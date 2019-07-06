@@ -159,7 +159,7 @@ class PlainMapViewer {
     public String toString() {
         final Map<String,String> map = new HashMap<>();
         map.put("scale", String.valueOf(scale));
-        map.put("map", map.toString());
+        map.put("map", this.map.toString());
 
         return map.toString();
 

@@ -9,7 +9,7 @@ import static org.junit.Assert.assertEquals;
 public class PlainMapViewerTest {
     private static final int DEFAULT_SCALE = 8;
 
-    PlainMapViewer viewer = null;
+    private PlainMapViewer viewer = null;
 
     @Before
     public void setUp() throws Exception {
@@ -77,6 +77,14 @@ public class PlainMapViewerTest {
                 " 32         \n" +
                 " 40       1 \n" +
                 " 48        1", getText());
+    }
+
+    @Test
+    public void testToString() throws Exception {
+        viewer.add(-10, -10);
+        viewer.add(20, 20);
+
+        assertEquals("{scale=8, map={(2, 2)=1, (-1, -1)=1}}", viewer.toString());
     }
 
     // ==== PRIVATE METHODS ====
