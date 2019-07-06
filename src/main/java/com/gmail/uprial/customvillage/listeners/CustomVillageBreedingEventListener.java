@@ -26,9 +26,9 @@ public class CustomVillageBreedingEventListener implements Listener {
     @SuppressWarnings("unused")
     @EventHandler(priority = EventPriority.NORMAL)
     public void onEntityBreedEvent(EntityBreedEvent event) {
-        if(!event.isCancelled() && plugin.isEnabled()) {
+        if(!event.isCancelled()) {
             // event.getEntity() will return an entity with zero coordinates which won't be applicable for the check.
-            if (!plugin.isEntityAllowed(event.getMother())) {
+            if (plugin.isEntityLimited(event.getMother())) {
                 if(customLogger.isDebugMode()) {
                     customLogger.debug(String.format("Breeding of %s with mother %s and father %s is not allowed",
                             format(event.getEntity()), format(event.getMother()), format(event.getFather())));
@@ -41,9 +41,9 @@ public class CustomVillageBreedingEventListener implements Listener {
     @SuppressWarnings("unused")
     @EventHandler(priority = EventPriority.NORMAL)
     public void onCreatureSpawnEvent(CreatureSpawnEvent event) {
-        if(!event.isCancelled() && plugin.isEnabled()) {
+        if(!event.isCancelled()) {
             final Entity entity = event.getEntity();
-            if (!plugin.isEntityAllowed(entity)) {
+            if (plugin.isEntityLimited(entity)) {
                 if(customLogger.isDebugMode()) {
                     customLogger.debug(String.format("Spawn of %s due to %s is not allowed",
                             format(entity), event.getSpawnReason()));
@@ -56,10 +56,10 @@ public class CustomVillageBreedingEventListener implements Listener {
     @SuppressWarnings("unused")
     @EventHandler(priority = EventPriority.NORMAL)
     public void onEntityTransformEvent(EntityTransformEvent event) {
-        if(!event.isCancelled() && plugin.isEnabled()) {
+        if(!event.isCancelled()) {
             final Entity sourceEntity = event.getEntity();
             for (final Entity targetEntity : event.getTransformedEntities()) {
-                if (!plugin.isEntityAllowed(targetEntity)) {
+                if (plugin.isEntityLimited(targetEntity)) {
                     if(customLogger.isDebugMode()) {
                         customLogger.debug(String.format("Transformation of %s to %s due to %s is not allowed",
                                 format(sourceEntity), format(targetEntity), event.getTransformReason()));

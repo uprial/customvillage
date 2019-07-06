@@ -79,7 +79,9 @@ public final class CustomVillage extends JavaPlugin {
     }
 
     void saveInfo() {
-        villageInfo.save();
+        if(customVillageConfig.isEnabled()) {
+            villageInfo.save();
+        }
     }
 
     void updateInfo() {
@@ -92,8 +94,12 @@ public final class CustomVillage extends JavaPlugin {
         villageInfo.optimize();
     }
 
-    public boolean isEntityAllowed(Entity entity) {
-        return villageInfo.isEntityAllowed(entity);
+    public boolean isEntityLimited(Entity entity) {
+        if(customVillageConfig.isEnabled()) {
+            return villageInfo.isEntityLimited(entity);
+        } else {
+            return false;
+        }
     }
 
     private static CustomVillageConfig loadConfig(FileConfiguration config, CustomLogger customLogger) {

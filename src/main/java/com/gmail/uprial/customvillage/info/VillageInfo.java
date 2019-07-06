@@ -63,26 +63,27 @@ public class VillageInfo {
        add(EntityType.CAT);
     }};
 
-    public boolean isEntityAllowed(Entity entity) {
+    public boolean isEntityLimited(Entity entity) {
         if(interestingEntityTypes.contains(entity.getType())) {
             final ClusterAggregator aggregator = getOrCreateAggregator(entity.getWorld());
             final Integer villageId = aggregator.getEntityClusterId(entity);
             if(villageId == null) {
                 // This is a pretty questionable approach, to restrict spawn in areas not considered as villages.
                 // But otherwise, cats and iron golems will spread outside of the village.
-                return false;
+                return true;
             } else {
                 final Village village = getOrCreateVillages(entity.getWorld()).get(villageId);
                 if(entity.getType().equals(EntityType.VILLAGER)) {
-                    return village.villagers.size() < village.getVillagersLimit();
+                    return village.villagers.size() >= village.getVillagersLimit();
                 } else if(entity.getType().equals(EntityType.IRON_GOLEM)) {
-                    return village.ironGolems.size() < village.getIronGolemsLimit();
+                    return village.ironGolems.size() >= village.getIronGolemsLimit();
                 } else if(entity.getType().equals(EntityType.CAT)) {
-                    return village.cats.size() < village.getCatsLimit();
+                    return village.cats.size() >= village.getCatsLimit();
                 }
             }
         }
-        return true;
+
+        return false;
     }
 
     private void forEachWorld(Consumer<World> consumer, String whatHasBeenDone) {
@@ -93,7 +94,6 @@ public class VillageInfo {
             return null;
         }, (time) -> customLogger.debug(String.format("%s in %dms.", whatHasBeenDone, time)));
     }
-
 
     private CustomStorage getStorage(World world) {
         final String filename = String.format("%s_villages.txt", world.getName());
