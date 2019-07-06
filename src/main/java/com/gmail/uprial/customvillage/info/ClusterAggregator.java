@@ -275,7 +275,7 @@ class ClusterAggregator {
     @Override
     public String toString() {
         final Map<String,String> map = new HashMap<>();
-        map.put("world", world.toString());
+        map.put("world", String.valueOf(world));
         map.put("scale", scale.toString());
         map.put("searchDepth", String.valueOf(searchDepth));
         map.put("regionCluster", regionCluster.toString());

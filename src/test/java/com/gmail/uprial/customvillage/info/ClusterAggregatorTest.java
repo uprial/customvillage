@@ -14,9 +14,6 @@ public class ClusterAggregatorTest {
     private static final int TEST_CLUSTER_SEARCH_DEPTH = 1;
 
     private class TestClusterAggregator extends ClusterAggregator {
-        //
-        private int loadedSquareCenterX = 200;
-        private int loadedSquareCenterZ = 200;
 
         TestClusterAggregator() {
             super(null, TEST_CLUSTER_SCALE, TEST_CLUSTER_SEARCH_DEPTH);
@@ -24,12 +21,9 @@ public class ClusterAggregatorTest {
 
         @Override
         boolean isBlockLoaded(int x, int z) {
+            final int loadedSquareCenterX = 200;
+            final int loadedSquareCenterZ = 200;
             return (Math.abs(x - loadedSquareCenterX) <= 100) && (Math.abs(z - loadedSquareCenterZ) <= 100);
-        }
-
-        void moveLoadedSquareCenter(int x, int z) {
-            loadedSquareCenterX = x;
-            loadedSquareCenterZ = z;
         }
     }
 
@@ -84,7 +78,7 @@ public class ClusterAggregatorTest {
     @Test
     public void testEmptyPopulation() throws Exception {
         aggregator.populate(new PopulationMap());
-        assertEquals("{}", aggregator.getDump().toString());
+        assertEquals("{}", getText());
     }
 
     @Test
@@ -92,7 +86,7 @@ public class ClusterAggregatorTest {
         aggregator.populate(new PopulationMap() {{
             add(new Vector(1, 1, 1));
         }});
-        assertEquals("{1:1:1=1}", aggregator.getDump().toString());
+        assertEquals("{1:1:1=1}", getText());
     }
 
     @Test
@@ -101,7 +95,7 @@ public class ClusterAggregatorTest {
             add(new Vector(1, 1, 1));
             add(new Vector(2, 2, 2));
         }});
-        assertEquals("{1:1:1=1, 2:2:2=1}", aggregator.getDump().toString());
+        assertEquals("{1:1:1=1, 2:2:2=1}", getText());
     }
 
     @Test
@@ -112,7 +106,7 @@ public class ClusterAggregatorTest {
             add(new Vector(2, 1, 1));
             add(new Vector(3, 1, 1));
         }});
-        assertEquals("{1:1:1=1, 4:1:1=1, 3:1:1=1, 2:1:1=1}", aggregator.getDump().toString());
+        assertEquals("{1:1:1=1, 4:1:1=1, 3:1:1=1, 2:1:1=1}", getText());
     }
 
     @Test
@@ -123,7 +117,7 @@ public class ClusterAggregatorTest {
             add(new Vector(2, 1, 1));
             add(new Vector(3, 1, 1));
         }});
-        assertEquals("{1:1:1=1, 4:1:1=1, 3:1:1=1, 2:1:1=1}", aggregator.getDump().toString());
+        assertEquals("{1:1:1=1, 4:1:1=1, 3:1:1=1, 2:1:1=1}", getText());
 
         aggregator.populate(new PopulationMap() {{
             add(new Vector(3, 1, 1));
@@ -131,7 +125,7 @@ public class ClusterAggregatorTest {
             add(new Vector(4, 1, 1));
             add(new Vector(1, 1, 1));
         }});
-        assertEquals("{1:1:1=1, 4:1:1=1, 3:1:1=1, 2:1:1=1}", aggregator.getDump().toString());
+        assertEquals("{1:1:1=1, 4:1:1=1, 3:1:1=1, 2:1:1=1}", getText());
     }
 
     @Test
@@ -144,7 +138,7 @@ public class ClusterAggregatorTest {
             add(new Vector(3, 1, 1));
             add(new Vector(4, 1, 1));
         }});
-        assertEquals("{6:1:1=1, 1:1:1=1, 4:1:1=1, 5:1:1=1, 3:1:1=1, 2:1:1=1}", aggregator.getDump().toString());
+        assertEquals("{6:1:1=1, 1:1:1=1, 4:1:1=1, 5:1:1=1, 3:1:1=1, 2:1:1=1}", getText());
     }
 
     @Test
@@ -155,7 +149,7 @@ public class ClusterAggregatorTest {
         aggregator.populate(new PopulationMap() {{
             add(new Vector(4, 4, 4));
         }});
-        assertEquals("{1:1:1=1, 4:4:4=2}", aggregator.getDump().toString());
+        assertEquals("{1:1:1=1, 4:4:4=2}", getText());
     }
 
     @Test
@@ -166,7 +160,7 @@ public class ClusterAggregatorTest {
         aggregator.populate(new PopulationMap() {{
             add(new Vector(4, 4, 4));
         }});
-        assertEquals("{4:4:4=1}", aggregator.getDump().toString());
+        assertEquals("{4:4:4=1}", getText());
     }
 
     @Test
@@ -175,14 +169,14 @@ public class ClusterAggregatorTest {
             add(new Vector(3, 3, 3));
             add(new Vector(6, 6, 6));
         }});
-        assertEquals("{6:6:6=2, 3:3:3=1}", aggregator.getDump().toString());
+        assertEquals("{6:6:6=2, 3:3:3=1}", getText());
 
         aggregator.populate(new PopulationMap() {{
             add(new Vector(6, 6, 6));
             add(new Vector(1, 1, 1));
             add(new Vector(3, 3, 3));
         }});
-        assertEquals("{1:1:1=3, 6:6:6=2, 3:3:3=1}", aggregator.getDump().toString());
+        assertEquals("{1:1:1=3, 6:6:6=2, 3:3:3=1}", getText());
     }
 
     @Test
@@ -191,13 +185,13 @@ public class ClusterAggregatorTest {
             add(new Vector(3, 3, 3));
             add(new Vector(6, 6, 6));
         }});
-        assertEquals("{6:6:6=2, 3:3:3=1}", aggregator.getDump().toString());
+        assertEquals("{6:6:6=2, 3:3:3=1}", getText());
 
         aggregator.populate(new PopulationMap() {{
             add(new Vector(1, 1, 1));
             add(new Vector(3, 3, 3));
         }});
-        assertEquals("{1:1:1=2, 3:3:3=1}", aggregator.getDump().toString());
+        assertEquals("{1:1:1=2, 3:3:3=1}", getText());
     }
 
     @Test
@@ -207,7 +201,7 @@ public class ClusterAggregatorTest {
             add(new Vector(3, 3, 3));
             add(new Vector(6, 6, 6));
         }});
-        assertEquals("{1:1:1=3, 6:6:6=2, 3:3:3=1}", aggregator.getDump().toString());
+        assertEquals("{1:1:1=3, 6:6:6=2, 3:3:3=1}", getText());
 
         aggregator.populate(new PopulationMap() {{
             add(new Vector(1, 1, -1));
@@ -215,7 +209,7 @@ public class ClusterAggregatorTest {
             add(new Vector(1, 1, 2));
             add(new Vector(1, 1, 3));
         }});
-        assertEquals("{1:1:1=3, 1:1:-1=3, 1:1:0=3, 3:3:3=1, 1:1:3=3, 1:1:2=3}", aggregator.getDump().toString());
+        assertEquals("{1:1:1=3, 1:1:-1=3, 1:1:0=3, 3:3:3=1, 1:1:3=3, 1:1:2=3}", getText());
     }
 
     @Test
@@ -225,13 +219,13 @@ public class ClusterAggregatorTest {
             add(new Vector(4, 4, 4));
             add(new Vector(6, 6, 6));
         }});
-        assertEquals("{1:1:1=2, 6:6:6=1, 4:4:4=3}", aggregator.getDump().toString());
+        assertEquals("{1:1:1=2, 6:6:6=1, 4:4:4=3}", getText());
 
         aggregator.populate(new PopulationMap() {{
             add(new Vector(1, 1, 1));
             add(new Vector(4, 4, 4));
         }});
-        assertEquals("{1:1:1=2, 4:4:4=3}", aggregator.getDump().toString());
+        assertEquals("{1:1:1=2, 4:4:4=3}", getText());
     }
 
     @Test
@@ -241,13 +235,13 @@ public class ClusterAggregatorTest {
             add(new Vector(5, 5, 5));
             add(new Vector(6, 6, 6));
         }});
-        assertEquals("{6:6:6=1, 5:5:5=1, 4:4:4=1}", aggregator.getDump().toString());
+        assertEquals("{6:6:6=1, 5:5:5=1, 4:4:4=1}", getText());
 
         aggregator.populate(new PopulationMap() {{
             add(new Vector(4, 4, 4));
             add(new Vector(6, 6, 6));
         }});
-        assertEquals("{6:6:6=1, 4:4:4=2}", aggregator.getDump().toString());
+        assertEquals("{6:6:6=1, 4:4:4=2}", getText());
     }
 
     @Test
@@ -256,13 +250,41 @@ public class ClusterAggregatorTest {
             add(new Vector(2, 2, 2));
             add(new Vector(4, 4, 4));
         }});
-        assertEquals("{2:2:2=1, 4:4:4=2}", aggregator.getDump().toString());
+        assertEquals("{2:2:2=1, 4:4:4=2}", getText());
 
         aggregator.populate(new PopulationMap() {{
             add(new Vector(2, 2, 2));
             add(new Vector(3, 3, 3));
             add(new Vector(4, 4, 4));
         }});
-        assertEquals("{2:2:2=1, 3:3:3=1, 4:4:4=1}", aggregator.getDump().toString());
+        assertEquals("{2:2:2=1, 3:3:3=1, 4:4:4=1}", getText());
     }
+
+    @Test
+    public void testToString() throws Exception {
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(2, 2, 2));
+            add(new Vector(4, 4, 4));
+        }});
+        assertEquals("{world=null, searchDepth=1, regionCluster={2.0,2.0,2.0=1, 4.0,4.0,4.0=2}, scale=32.0,5.0,32.0}", aggregator.toString());
+    }
+
+    @Test
+    public void testLoadFromDump() throws Exception {
+        aggregator.populate(new PopulationMap() {{
+            add(new Vector(2, 2, 2));
+            add(new Vector(4, 4, 4));
+        }});
+        assertEquals("{2:2:2=1, 4:4:4=2}", getText());
+
+        aggregator.loadFromDump(aggregator.getDump());
+        assertEquals("{2:2:2=1, 4:4:4=2}", getText());
+    }
+
+    // ==== PRIVATE METHODS ====
+
+    private String getText() {
+        return aggregator.getDump().toString();
+    }
+
 }
