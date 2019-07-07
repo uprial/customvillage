@@ -15,7 +15,7 @@ class Village {
     // https://minecraft.gamepedia.com/Cat
     private static final int MAX_CATS = 10;
     // https://minecraft.gamepedia.com/Iron_Golem
-    private static final int VILLAGERS_PER_GOLEM = 4 * 2;
+    private static final int VILLAGERS_PER_GOLEM = 4;
 
     private final List<Villager> villagers = new ArrayList<>();
     private final List<IronGolem> ironGolems = new ArrayList<>();
