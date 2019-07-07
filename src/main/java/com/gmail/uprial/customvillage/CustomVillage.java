@@ -3,6 +3,7 @@ package com.gmail.uprial.customvillage;
 import com.gmail.uprial.customvillage.common.CustomLogger;
 import com.gmail.uprial.customvillage.config.InvalidConfigException;
 import com.gmail.uprial.customvillage.info.VillageInfo;
+import com.gmail.uprial.customvillage.info.VillageInfoType;
 import com.gmail.uprial.customvillage.listeners.CustomVillageBlocksListener;
 import com.gmail.uprial.customvillage.listeners.CustomVillageBreedingEventListener;
 import org.bukkit.block.Block;
@@ -78,8 +79,8 @@ public final class CustomVillage extends JavaPlugin {
         return YamlConfiguration.loadConfiguration(configFile);
     }
 
-    List<String> getVillageInfoTextLines() {
-        return villageInfo.getTextLines();
+    List<String> getVillageInfoTextLines(final VillageInfoType infoType, final Integer scale) {
+        return villageInfo.getTextLines(infoType, scale);
     }
 
     void saveInfo() {

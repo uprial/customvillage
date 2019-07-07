@@ -1,14 +1,17 @@
 package com.gmail.uprial.customvillage;
 
+import com.gmail.uprial.customvillage.common.CustomLogger;
+import com.gmail.uprial.customvillage.info.VillageInfoType;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
-import com.gmail.uprial.customvillage.common.CustomLogger;
-
 class CustomVillageCommandExecutor implements CommandExecutor {
-    public static final String COMMAND_NS = "customvillage";
+    static final String COMMAND_NS = "customvillage";
+
+    private static final int DEFAULT_SCALE = 8;
+    private static final VillageInfoType DEFAULT_INFO_TYPE = VillageInfoType.VILLAGERS;
 
     private final CustomVillage plugin;
 
@@ -30,7 +33,19 @@ class CustomVillageCommandExecutor implements CommandExecutor {
             }
             else if((args.length >= 1) && (args[0].equalsIgnoreCase("info"))) {
                 if (sender.hasPermission(COMMAND_NS + ".info")) {
-                    customLogger.info("\n" + StringUtils.join(plugin.getVillageInfoTextLines(), "\n"));
+                    VillageInfoType infoType;
+                    if (args.length >= 2) {
+                        infoType = VillageInfoType.valueOf(args[1].toUpperCase());
+                    } else {
+                        infoType = DEFAULT_INFO_TYPE;
+                    }
+                    Integer scale;
+                    if (args.length >= 3) {
+                        scale = Integer.valueOf(args[2]);
+                    } else {
+                        scale = DEFAULT_SCALE;
+                    }
+                    customLogger.info("\n" + StringUtils.join(plugin.getVillageInfoTextLines(infoType, scale), "\n"));
                     return true;
                 }
             }
@@ -45,7 +60,7 @@ class CustomVillageCommandExecutor implements CommandExecutor {
 
                 if (sender.hasPermission(COMMAND_NS + ".reload")) {
                     helpString += '/' + COMMAND_NS + " reload - reload config from disk\n";
-                    helpString += '/' + COMMAND_NS + " info - show information about existing villages\n";
+                    helpString += '/' + COMMAND_NS + " info [villagers|golems|cats|beds;default=villagers] [@scale;default=8] - show information\n";
                     helpString += '/' + COMMAND_NS + " optimize - removes excessive villagers, iron golems and cats\n";
                 }
 

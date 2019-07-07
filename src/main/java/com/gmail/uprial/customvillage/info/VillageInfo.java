@@ -26,7 +26,6 @@ public class VillageInfo {
         T call();
     }
 
-    private static final int PLAIN_MAP_SCALE = 8;
     private static final Vector CLUSTER_SCALE = new Vector(32, 5, 32);
     private static final int CLUSTER_SEARCH_DEPTH = 1;
 
@@ -303,7 +302,7 @@ public class VillageInfo {
         return removed;
     }
 
-    public List<String> getTextLines() {
+    public List<String> getTextLines(final VillageInfoType infoType, final Integer scale) {
         return measureTime(() -> {
             final List<String> lines = new ArrayList<>();
             for (final World world : plugin.getServer().getWorlds()) {
@@ -317,7 +316,7 @@ public class VillageInfo {
                     lines.add(String.format("Lost Villagers: %d", lostVillage.getVillagers().size()));
                     lines.add(String.format("Lost Iron Golems: %d", lostVillage.getIronGolems().size()));
                     lines.add(String.format("Lost Cats: %d", lostVillage.getCats().size()));
-                    lines.addAll(getViewTextLines(entities));
+                    lines.addAll(getViewTextLines(entities, scale));
 
                     for (final Map.Entry<Integer, Village> entry : villages.entrySet()) {
                         final Integer villageId = entry.getKey();
@@ -329,8 +328,27 @@ public class VillageInfo {
                             lines.add(String.format("  Villagers: %d/%d", village.getVillagers().size(), village.getVillagersLimit()));
                             lines.add(String.format("  Iron Golems: %d/%d", village.getIronGolems().size(), village.getIronGolemsLimit()));
                             lines.add(String.format("  Cats: %d/%d", village.getCats().size(), village.getCatsLimit()));
-                            if (!village.getVillagers().isEmpty()) {
-                                lines.addAll(getViewTextLines(village.getVillagers()));
+                            switch (infoType) {
+                                case BEDS:
+                                    final PlainMapViewer viewer = new PlainMapViewer(scale);
+                                    for (final Block block : village.getBedHeads()) {
+                                        final Location location = block.getLocation();
+                                        viewer.add(location.getBlockX(), location.getBlockZ());
+                                    }
+                                    lines.addAll(viewer.getTextLines());
+                                    break;
+
+                                case VILLAGERS:
+                                    lines.addAll(getViewTextLines(village.getVillagers(), scale));
+                                    break;
+
+                                case GOLEMS:
+                                    lines.addAll(getViewTextLines(village.getIronGolems(), scale));
+                                    break;
+
+                                case CATS:
+                                    lines.addAll(getViewTextLines(village.getCats(), scale));
+                                    break;
                             }
                         }
                     }
@@ -341,8 +359,8 @@ public class VillageInfo {
         }, (time) -> customLogger.debug(String.format("Village info has been gathered in %dms.", time)));
     }
 
-    private <T extends Entity> List<String> getViewTextLines(final Collection<T> entities) {
-        final PlainMapViewer viewer = new PlainMapViewer(PLAIN_MAP_SCALE);
+    private <T extends Entity> List<String> getViewTextLines(final Collection<T> entities, final int scale) {
+        final PlainMapViewer viewer = new PlainMapViewer(scale);
         for (final Entity entity : entities) {
             final Location location = entity.getLocation();
             viewer.add(location.getBlockX(), location.getBlockZ());

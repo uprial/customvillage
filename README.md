@@ -23,7 +23,7 @@ I ended up with a mess of hundreds of illegal entities on the map. Fortunately, 
 ## Commands
 
 * `customvillage reload` - reload config from disk
-* `customvillage info` - show information about existing villages
+* `customvillage info [villagers|golems|cats|beds;default=villagers] [@scale;default=8]` - show information
 * `customvillage optimize` - removes excessive villagers, iron golems and cats
 
 ## Permissions
