@@ -22,8 +22,6 @@ public class VillageInfo {
 
     private class Villages extends HashMap<Integer,Village> {
     }
-    private class SpawnReasons extends HashSet<CreatureSpawnEvent.SpawnReason> {
-    }
     public interface Func<T> {
         T call();
     }
