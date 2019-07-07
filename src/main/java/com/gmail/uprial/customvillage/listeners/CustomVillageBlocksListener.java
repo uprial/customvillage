@@ -1,7 +1,6 @@
 package com.gmail.uprial.customvillage.listeners;
 
 import com.gmail.uprial.customvillage.CustomVillage;
-import com.gmail.uprial.customvillage.common.CustomLogger;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.event.EventHandler;
@@ -16,11 +15,9 @@ import java.util.List;
 
 public class CustomVillageBlocksListener implements Listener {
     private final CustomVillage plugin;
-    private final CustomLogger customLogger;
 
-    public CustomVillageBlocksListener(CustomVillage plugin, CustomLogger customLogger) {
+    public CustomVillageBlocksListener(CustomVillage plugin) {
         this.plugin = plugin;
-        this.customLogger = customLogger;
     }
 
     @SuppressWarnings("unused")

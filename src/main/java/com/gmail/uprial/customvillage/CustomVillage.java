@@ -42,7 +42,7 @@ public final class CustomVillage extends JavaPlugin {
         taskPeriodicSave = new TaskPeriodicSave(this).runTaskTimer();
         taskPeriodicUpdate = new TaskPeriodicUpdate(this).runTaskTimer();
         getServer().getPluginManager().registerEvents(new CustomVillageBreedingEventListener(this, consoleLogger), this);
-        getServer().getPluginManager().registerEvents(new CustomVillageBlocksListener(this, consoleLogger), this);
+        getServer().getPluginManager().registerEvents(new CustomVillageBlocksListener(this), this);
 
         getCommand(COMMAND_NS).setExecutor(new CustomVillageCommandExecutor(this));
         consoleLogger.info("Plugin enabled");
