@@ -8,6 +8,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Bed;
 import org.bukkit.entity.*;
+import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.util.Vector;
 
 import java.util.*;
@@ -20,7 +21,8 @@ public class VillageInfo {
     private static final int LOST_VILLAGE_ID = -1;
 
     private class Villages extends HashMap<Integer,Village> {
-
+    }
+    private class SpawnReasons extends HashSet<CreatureSpawnEvent.SpawnReason> {
     }
     public interface Func<T> {
         T call();
@@ -57,22 +59,40 @@ public class VillageInfo {
                 "Villages have been optimized");
     }
 
-    private static final Set<EntityType> interestingEntityTypes = new HashSet<EntityType>() {{
-       add(EntityType.VILLAGER);
-       add(EntityType.IRON_GOLEM);
-       add(EntityType.CAT);
+    /*
+        Possible input:
+
+            VILLAGER, BREEDING | CURED
+            IRON_GOLEM, VILLAGE_DEFENSE
+            CAT, DEFAULT
+     */
+    private static final Map<EntityType,Set<CreatureSpawnEvent.SpawnReason>> entityTypesSpawnReasons = new HashMap<EntityType,Set<CreatureSpawnEvent.SpawnReason>>() {{
+       put(EntityType.VILLAGER,
+               new HashSet<CreatureSpawnEvent.SpawnReason>() {{
+                   add(CreatureSpawnEvent.SpawnReason.BREEDING);
+                   add(CreatureSpawnEvent.SpawnReason.CURED);
+               }});
+        put(EntityType.IRON_GOLEM,
+                new HashSet<CreatureSpawnEvent.SpawnReason>() {{
+                    add(CreatureSpawnEvent.SpawnReason.VILLAGE_DEFENSE);
+                }});
+        put(EntityType.CAT,
+                new HashSet<CreatureSpawnEvent.SpawnReason>() {{
+                    add(CreatureSpawnEvent.SpawnReason.DEFAULT);
+                }});
     }};
 
-    public boolean isEntityLimited(final Entity entity) {
-        if(interestingEntityTypes.contains(entity.getType())) {
-            final ClusterAggregator aggregator = getOrCreateAggregator(entity.getWorld());
-            final Integer villageId = aggregator.getEntityClusterId(entity);
-            if(villageId == null) {
-                // This is a pretty questionable approach, to restrict spawn in areas not considered as villages.
-                // But otherwise, cats and iron golems will spread outside of the village.
-                return true;
-            } else {
+    public boolean isEntityLimited(final Entity entity, final CreatureSpawnEvent.SpawnReason spawnReason) {
+        Set<CreatureSpawnEvent.SpawnReason> spawnReasons = entityTypesSpawnReasons.get(entity.getType());
+        if(spawnReasons != null) {
+            if(spawnReasons.contains(spawnReason)) {
+                final ClusterAggregator aggregator = getOrCreateAggregator(entity.getWorld());
+                final Integer villageId = aggregator.getEntityClusterId(entity);
+                if(villageId == null) {
+                    return true;
+                }
                 final Village village = getOrCreateVillages(entity.getWorld()).get(villageId);
+
                 if(entity.getType().equals(EntityType.VILLAGER)) {
                     return village.getVillagers().size() >= village.getVillagersLimit();
                 } else if(entity.getType().equals(EntityType.IRON_GOLEM)) {

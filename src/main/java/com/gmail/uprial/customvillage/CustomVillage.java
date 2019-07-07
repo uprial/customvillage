@@ -10,6 +10,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.HandlerList;
+import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -97,9 +98,9 @@ public final class CustomVillage extends JavaPlugin {
         villageInfo.optimize();
     }
 
-    public boolean isEntityLimited(Entity entity) {
+    public boolean isEntityLimited(Entity entity, CreatureSpawnEvent.SpawnReason spawnReason) {
         if(customVillageConfig.isEnabled()) {
-            return villageInfo.isEntityLimited(entity);
+            return villageInfo.isEntityLimited(entity, spawnReason);
         } else {
             return false;
         }
