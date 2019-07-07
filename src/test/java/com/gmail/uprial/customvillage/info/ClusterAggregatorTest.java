@@ -57,6 +57,21 @@ public class ClusterAggregatorTest {
 
             add(new Vector(1, 1, 32));
             add(new Vector(0, 0, 1));
+
+            add(new Vector(0, 0, 0));
+            add(new Vector(0, 0, 0));
+
+            add(new Vector(-1, -1, -1));
+            add(new Vector(-1, -1, -1));
+
+            add(new Vector(-31, -1, -1));
+            add(new Vector(-1, -1, -1));
+
+            add(new Vector(-32, -1, -1));
+            add(new Vector(-1, -1, -1));
+
+            add(new Vector(-33, -1, -1));
+            add(new Vector(-2, -1, -1));
         }};
 
         for (int i = 0; i < list.size() / 2; i++) {

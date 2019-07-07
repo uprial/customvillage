@@ -320,9 +320,9 @@ class ClusterAggregator {
 
     Vector getRegion(final Vector vector) {
         return new Vector(
-                vector.getBlockX() / scale.getBlockX(),
-                vector.getBlockY() / scale.getBlockY(),
-                vector.getBlockZ() / scale.getBlockZ());
+                Math.floor(vector.getX() / scale.getX()),
+                Math.floor(vector.getY() / scale.getY()),
+                Math.floor(vector.getZ() / scale.getZ()));
     }
 
     // ==== COMMON METHODS ====
