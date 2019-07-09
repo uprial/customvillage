@@ -45,8 +45,8 @@ I will be happy to add some features or fix bugs. My mail: uprial@gmail.com.
 
 ## Useful links
 * [Project on GitHub](https://github.com/uprial/customvillage/)
-* [Project on Bukkit Dev](http://dev.bukkit.org/bukkit-plugins/customvillage/) - TBD
-* [Project on Spigot](https://www.spigotmc.org/resources/customvillage.???/) - TBD
+* [Project on Bukkit Dev](http://dev.bukkit.org/bukkit-plugins/customvillage/)
+* [Project on Spigot](https://www.spigotmc.org/resources/customvillage.69170/)
 * [TODO list](TODO.md)
 
 ## Related projects
