@@ -35,13 +35,21 @@ class CustomVillageCommandExecutor implements CommandExecutor {
                 if (sender.hasPermission(COMMAND_NS + ".info")) {
                     VillageInfoType infoType;
                     if (args.length >= 2) {
-                        infoType = VillageInfoType.valueOf(args[1].toUpperCase());
+                        try {
+                            infoType = VillageInfoType.valueOf(args[1].toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            return false;
+                        }
                     } else {
                         infoType = DEFAULT_INFO_TYPE;
                     }
                     Integer scale;
                     if (args.length >= 3) {
-                        scale = Integer.valueOf(args[2]);
+                        try {
+                            scale = Integer.valueOf(args[2]);
+                        } catch (NumberFormatException e) {
+                            return false;
+                        }
                     } else {
                         scale = DEFAULT_SCALE;
                     }
