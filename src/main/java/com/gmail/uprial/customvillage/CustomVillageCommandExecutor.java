@@ -60,7 +60,11 @@ class CustomVillageCommandExecutor implements CommandExecutor {
 
                 if (sender.hasPermission(COMMAND_NS + ".reload")) {
                     helpString += '/' + COMMAND_NS + " reload - reload config from disk\n";
+                }
+                if (sender.hasPermission(COMMAND_NS + ".info")) {
                     helpString += '/' + COMMAND_NS + " info [villagers|golems|cats|beds;default=villagers] [@scale;default=8] - show information\n";
+                }
+                if (sender.hasPermission(COMMAND_NS + ".optimize")) {
                     helpString += '/' + COMMAND_NS + " optimize - removes excessive villagers, iron golems and cats\n";
                 }
 
