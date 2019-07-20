@@ -12,15 +12,15 @@ public final class CustomVillageConfig {
         this.enabled = enabled;
     }
 
-    public static boolean isDebugMode(FileConfiguration config, CustomLogger customLogger) throws InvalidConfigException {
+    static boolean isDebugMode(FileConfiguration config, CustomLogger customLogger) throws InvalidConfigException {
         return ConfigReaderSimple.getBoolean(config, customLogger, "debug", "'debug' flag", false);
     }
 
-    public  boolean isEnabled() {
+    boolean isEnabled() {
         return enabled;
     }
 
-    public static CustomVillageConfig getFromConfig(FileConfiguration config, CustomLogger customLogger) throws InvalidConfigException {
+    static CustomVillageConfig getFromConfig(FileConfiguration config, CustomLogger customLogger) throws InvalidConfigException {
         boolean enabled = ConfigReaderSimple.getBoolean(config, customLogger, "enabled", "'enabled' flag", true);
 
         return new CustomVillageConfig(enabled);
