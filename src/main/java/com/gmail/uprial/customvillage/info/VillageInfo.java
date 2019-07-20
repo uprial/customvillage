@@ -198,8 +198,8 @@ public class VillageInfo {
         return villages;
     }
 
-    private <T extends Entity> int optimizeEntities(final List<T> entities, final int limit,
-                                                     final Function<T,Boolean> toOptimize, String title) {
+    private <T extends Entity> int optimizeExcessiveEntities(final List<T> entities, final int limit,
+                                                             final Function<T,Boolean> toOptimize, String title) {
         int removed = 0;
         if(!title.isEmpty()) {
             title = " " + title;
@@ -221,7 +221,7 @@ public class VillageInfo {
         return removed;
     }
 
-    private <T extends Entity> int removeEntities(final List<T> entities, final String title) {
+    private <T extends Entity> int removeLostEntities(final List<T> entities, final String title) {
         int removed = 0;
         if(!entities.isEmpty()) {
             customLogger.info(String.format("The lost %d %s(s) will be removed", entities.size(), title));
@@ -253,8 +253,8 @@ public class VillageInfo {
             customLogger.warning(String.format("Something went completely wrong and we lost a %s", format(villager)));
         }
 
-        removed += removeEntities(lostVillage.getIronGolems(), "iron golem");
-        removed += removeEntities(lostVillage.getCats(), "cat");
+        removed += removeLostEntities(lostVillage.getIronGolems(), "iron golem");
+        removed += removeLostEntities(lostVillage.getCats(), "cat");
 
         for (final Map.Entry<Integer, Village> entry : villages.entrySet()) {
             final Integer villageId = entry.getKey();
@@ -270,13 +270,13 @@ public class VillageInfo {
                     customLogger.info(String.format("Only %d villager(s) in village #%d have beds, the excessive %d villager(s) will be removed",
                             village.getVillagersLimit(), villageId, village.getVillagers().size() - village.getVillagersLimit()));
 
-                    removed += optimizeEntities(village.getVillagers(), village.getVillagersLimit(),
+                    removed += optimizeExcessiveEntities(village.getVillagers(), village.getVillagersLimit(),
                             (villager) -> !villager.isAdult(), "baby");
-                    removed += optimizeEntities(village.getVillagers(), village.getVillagersLimit(),
+                    removed += optimizeExcessiveEntities(village.getVillagers(), village.getVillagersLimit(),
                             (villager) -> villager.getProfession().equals(Villager.Profession.NITWIT), "nitwit");
-                    removed += optimizeEntities(village.getVillagers(), village.getVillagersLimit(),
+                    removed += optimizeExcessiveEntities(village.getVillagers(), village.getVillagersLimit(),
                             (villager) -> villager.getProfession().equals(Villager.Profession.NONE), "unemployed");
-                    removed += optimizeEntities(village.getVillagers(), village.getVillagersLimit(),
+                    removed += optimizeExcessiveEntities(village.getVillagers(), village.getVillagersLimit(),
                             (villager) -> true, "");
                 }
 
@@ -285,8 +285,8 @@ public class VillageInfo {
                     customLogger.info(String.format("Too many cats (>%d) in village #%d, the excessive %d cat(s) will be removed",
                             village.getCatsLimit(), villageId, village.getCats().size() - village.getCatsLimit()));
 
-                    removed += optimizeEntities(village.getCats(), village.getCatsLimit(), (cat) -> !cat.isAdult(), "baby");
-                    removed += optimizeEntities(village.getCats(), village.getCatsLimit(), (cat) -> true, "");
+                    removed += optimizeExcessiveEntities(village.getCats(), village.getCatsLimit(), (cat) -> !cat.isAdult(), "baby");
+                    removed += optimizeExcessiveEntities(village.getCats(), village.getCatsLimit(), (cat) -> true, "");
                 }
 
                 // Optimize iron golems
@@ -294,7 +294,7 @@ public class VillageInfo {
                     customLogger.info(String.format("Only %d iron golem(s) in village #%d have support of villages, the excessive %d iron golem(s) will be removed",
                             village.getIronGolemsLimit(), villageId, village.getIronGolems().size() - village.getIronGolemsLimit()));
 
-                    removed += optimizeEntities(village.getIronGolems(), village.getIronGolemsLimit(), (ironGolem) -> true, "");
+                    removed += optimizeExcessiveEntities(village.getIronGolems(), village.getIronGolemsLimit(), (ironGolem) -> true, "");
                 }
             }
         }
