@@ -306,17 +306,35 @@ public class VillageInfo {
         return measureTime(() -> {
             final List<String> lines = new ArrayList<>();
             for (final World world : plugin.getServer().getWorlds()) {
-                final Collection<Villager> entities = world.getEntitiesByClass(Villager.class);
                 Villages villages = getVillages(world);
                 final Village lostVillage = villages.get(LOST_VILLAGE_ID);
 
-                if(!entities.isEmpty() || !lostVillage.getVillagers().isEmpty()
+                // villages.size() is always greater than 1 because of the LostVillage item.
+                if((villages.size() > 1) || !lostVillage.getVillagers().isEmpty()
                         || !lostVillage.getIronGolems().isEmpty() || !lostVillage.getCats().isEmpty()) {
                     lines.add(String.format("==== World '%s' ====", world.getName()));
                     lines.add(String.format("Lost Villagers: %d", lostVillage.getVillagers().size()));
                     lines.add(String.format("Lost Iron Golems: %d", lostVillage.getIronGolems().size()));
                     lines.add(String.format("Lost Cats: %d", lostVillage.getCats().size()));
-                    lines.addAll(getViewTextLines(entities, scale));
+                    switch (infoType) {
+                        case BEDS:
+                            lines.add("/* Sorry, but all the beds can't be displayed");
+                            lines.add("   due to performance reasons. */");
+                            break;
+
+                        case VILLAGERS:
+                            lines.addAll(getViewTextLines(world.getEntitiesByClass(Villager.class), scale));
+                            break;
+
+                        case GOLEMS:
+                            lines.addAll(getViewTextLines(world.getEntitiesByClass(IronGolem.class), scale));
+                            break;
+
+                        case CATS:
+                            lines.addAll(getViewTextLines(world.getEntitiesByClass(Cat.class), scale));
+                            break;
+                    }
+
 
                     for (final Map.Entry<Integer, Village> entry : villages.entrySet()) {
                         final Integer villageId = entry.getKey();
