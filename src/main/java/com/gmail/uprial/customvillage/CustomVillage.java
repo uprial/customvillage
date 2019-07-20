@@ -2,6 +2,8 @@ package com.gmail.uprial.customvillage;
 
 import com.gmail.uprial.customvillage.common.CustomLogger;
 import com.gmail.uprial.customvillage.config.InvalidConfigException;
+import com.gmail.uprial.customvillage.crons.SaveCron;
+import com.gmail.uprial.customvillage.crons.UpdateCron;
 import com.gmail.uprial.customvillage.info.VillageInfo;
 import com.gmail.uprial.customvillage.info.VillageInfoType;
 import com.gmail.uprial.customvillage.listeners.CustomVillageBlocksListener;
@@ -13,7 +15,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.util.List;
@@ -29,8 +30,8 @@ public final class CustomVillage extends JavaPlugin {
 
     private VillageInfo villageInfo = null;
 
-    private BukkitTask taskPeriodicSave;
-    private BukkitTask taskPeriodicUpdate;
+    private SaveCron saveCron;
+    private UpdateCron updateCron;
 
     @Override
     public void onEnable() {
@@ -41,8 +42,8 @@ public final class CustomVillage extends JavaPlugin {
 
         villageInfo = new VillageInfo(this, consoleLogger);
 
-        taskPeriodicSave = new TaskPeriodicSave(this).runTaskTimer();
-        taskPeriodicUpdate = new TaskPeriodicUpdate(this).runTaskTimer();
+        saveCron = new SaveCron(this);
+        updateCron = new UpdateCron(this);
         getServer().getPluginManager().registerEvents(new CustomVillageBreedingEventListener(this, consoleLogger), this);
         getServer().getPluginManager().registerEvents(new CustomVillageBlocksListener(this), this);
 
@@ -50,17 +51,23 @@ public final class CustomVillage extends JavaPlugin {
         consoleLogger.info("Plugin enabled");
     }
 
+    public CustomVillageConfig getCustomVillageConfig() {
+        return customVillageConfig;
+    }
+
     void reloadConfig(CustomLogger userLogger) {
         reloadConfig();
         customVillageConfig = loadConfig(getConfig(), userLogger, consoleLogger);
+        saveCron.onConfigChange();
+        updateCron.onConfigChange();
     }
 
     @Override
     public void onDisable() {
         HandlerList.unregisterAll(this);
 
-        taskPeriodicUpdate.cancel();
-        taskPeriodicSave.cancel();
+        updateCron.stop();
+        saveCron.stop();
 
         saveInfo();
 
@@ -83,13 +90,13 @@ public final class CustomVillage extends JavaPlugin {
         return villageInfo.getTextLines(infoType, scale);
     }
 
-    void saveInfo() {
+    public void saveInfo() {
         if(customVillageConfig.isEnabled()) {
             villageInfo.save();
         }
     }
 
-    void updateInfo() {
+    public void updateInfo() {
         if(customVillageConfig.isEnabled()) {
             villageInfo.update();
         }

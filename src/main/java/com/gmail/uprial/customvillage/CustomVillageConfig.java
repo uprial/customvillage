@@ -16,7 +16,7 @@ public final class CustomVillageConfig {
         return ConfigReaderSimple.getBoolean(config, customLogger, "debug", "'debug' flag", false);
     }
 
-    boolean isEnabled() {
+    public boolean isEnabled() {
         return enabled;
     }
 
