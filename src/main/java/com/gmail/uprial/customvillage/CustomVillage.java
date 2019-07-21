@@ -91,15 +91,11 @@ public final class CustomVillage extends JavaPlugin {
     }
 
     public void saveInfo() {
-        if(customVillageConfig.isEnabled()) {
-            villageInfo.save();
-        }
+        villageInfo.save();
     }
 
     public void updateInfo() {
-        if(customVillageConfig.isEnabled()) {
-            villageInfo.update();
-        }
+        villageInfo.update();
     }
 
     void optimize() {
