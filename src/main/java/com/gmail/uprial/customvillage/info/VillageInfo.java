@@ -16,6 +16,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static com.gmail.uprial.customvillage.common.Formatter.format;
+import static com.gmail.uprial.customvillage.info.Village.isUserEntity;
 
 public class VillageInfo {
     private static final int LOST_VILLAGE_ID = -1;
@@ -80,6 +81,10 @@ public class VillageInfo {
     }};
 
     public boolean isEntityLimited(final Entity entity, final CreatureSpawnEvent.SpawnReason spawnReason) {
+        if(isUserEntity(entity)) {
+            return false;
+        }
+
         Set<CreatureSpawnEvent.SpawnReason> spawnReasons = entityTypesSpawnReasons.get(entity.getType());
         if(spawnReasons != null) {
             if(spawnReasons.contains(spawnReason)) {
@@ -93,9 +98,9 @@ public class VillageInfo {
                 if(entity.getType().equals(EntityType.VILLAGER)) {
                     return village.getVillagers().size() >= village.getVillagersLimit();
                 } else if(entity.getType().equals(EntityType.IRON_GOLEM)) {
-                    return village.getIronGolems().size() >= village.getIronGolemsLimit();
+                    return village.getNaturalIronGolems().size() >= village.getNaturalIronGolemsLimit();
                 } else if(entity.getType().equals(EntityType.CAT)) {
-                    return village.getCats().size() >= village.getCatsLimit();
+                    return village.getNaturalCats().size() >= village.getNaturalCatsLimit();
                 }
             }
         }
@@ -161,7 +166,7 @@ public class VillageInfo {
             final Village village = new Village();
             villages.put(villageId, village);
 
-            village.getBedHeads().addAll(aggregator.getBlocksInCluster(villageId, (Block block) -> {
+            village.addAllBedHeads(aggregator.getBlocksInCluster(villageId, (Block block) -> {
                 if (block.getBlockData() instanceof org.bukkit.block.data.type.Bed) {
                     final org.bukkit.block.data.type.Bed bed = (org.bukkit.block.data.type.Bed) block.getBlockData();
                     return (bed.getPart() == Bed.Part.HEAD);
@@ -172,25 +177,18 @@ public class VillageInfo {
 
         final Village lostVillage = new Village();
         // Count villagers
-        lostVillage.getVillagers().addAll(aggregator.fetchEntities(Villager.class, (villageId, villager) -> {
-            Village village = villages.get(villageId);
-            village.getVillagers().add(villager);
+        lostVillage.addAllVillagers(aggregator.fetchEntities(Villager.class, (villageId, villager) -> {
+            villages.get(villageId).addVillager(villager);
         }));
 
         // Count ironGolems
-        lostVillage.getIronGolems().addAll(aggregator.fetchEntities(IronGolem.class, (villageId, ironGolem) -> {
-            if (!ironGolem.isPlayerCreated()) {
-                Village village = villages.get(villageId);
-                village.getIronGolems().add(ironGolem);
-            }
+        lostVillage.addAllIronGolems(aggregator.fetchEntities(IronGolem.class, (villageId, ironGolem) -> {
+            villages.get(villageId).addIronGolem(ironGolem);
         }));
 
         // Count cats
-        lostVillage.getCats().addAll(aggregator.fetchEntities(Cat.class, (villageId, cat) -> {
-            if (!cat.isTamed()) {
-                Village village = villages.get(villageId);
-                village.getCats().add(cat);
-            }
+        lostVillage.addAllCats(aggregator.fetchEntities(Cat.class, (villageId, cat) -> {
+            villages.get(villageId).addCat(cat);
         }));
 
         villages.put(LOST_VILLAGE_ID, lostVillage);
@@ -253,8 +251,8 @@ public class VillageInfo {
             customLogger.warning(String.format("Something went completely wrong and we lost a %s", format(villager)));
         }
 
-        removed += removeLostEntities(lostVillage.getIronGolems(), "iron golem");
-        removed += removeLostEntities(lostVillage.getCats(), "cat");
+        removed += removeLostEntities(lostVillage.getNaturalIronGolems(), "iron golem");
+        removed += removeLostEntities(lostVillage.getNaturalCats(), "cat");
 
         for (final Map.Entry<Integer, Village> entry : villages.entrySet()) {
             final Integer villageId = entry.getKey();
@@ -281,20 +279,20 @@ public class VillageInfo {
                 }
 
                 // Optimize cats
-                if (village.getCats().size() > village.getCatsLimit()) {
+                if (village.getNaturalCats().size() > village.getNaturalCatsLimit()) {
                     customLogger.info(String.format("Too many cats (>%d) in village #%d, the excessive %d cat(s) will be removed",
-                            village.getCatsLimit(), villageId, village.getCats().size() - village.getCatsLimit()));
+                            village.getNaturalCatsLimit(), villageId, village.getNaturalCats().size() - village.getNaturalCatsLimit()));
 
-                    removed += optimizeExcessiveEntities(village.getCats(), village.getCatsLimit(), (cat) -> !cat.isAdult(), "baby");
-                    removed += optimizeExcessiveEntities(village.getCats(), village.getCatsLimit(), (cat) -> true, "");
+                    removed += optimizeExcessiveEntities(village.getNaturalCats(), village.getNaturalCatsLimit(), (cat) -> !cat.isAdult(), "baby");
+                    removed += optimizeExcessiveEntities(village.getNaturalCats(), village.getNaturalCatsLimit(), (cat) -> true, "");
                 }
 
                 // Optimize iron golems
-                if (village.getIronGolems().size() > village.getIronGolemsLimit()) {
+                if (village.getNaturalIronGolems().size() > village.getNaturalIronGolemsLimit()) {
                     customLogger.info(String.format("Only %d iron golem(s) in village #%d have support of villages, the excessive %d iron golem(s) will be removed",
-                            village.getIronGolemsLimit(), villageId, village.getIronGolems().size() - village.getIronGolemsLimit()));
+                            village.getNaturalIronGolemsLimit(), villageId, village.getNaturalIronGolems().size() - village.getNaturalIronGolemsLimit()));
 
-                    removed += optimizeExcessiveEntities(village.getIronGolems(), village.getIronGolemsLimit(), (ironGolem) -> true, "");
+                    removed += optimizeExcessiveEntities(village.getNaturalIronGolems(), village.getNaturalIronGolemsLimit(), (ironGolem) -> true, "");
                 }
             }
         }
@@ -311,11 +309,13 @@ public class VillageInfo {
 
                 // villages.size() is always greater than 1 because of the LostVillage item.
                 if((villages.size() > 1) || !lostVillage.getVillagers().isEmpty()
-                        || !lostVillage.getIronGolems().isEmpty() || !lostVillage.getCats().isEmpty()) {
+                        || !lostVillage.getAllIronGolems().isEmpty() || !lostVillage.getAllCats().isEmpty()) {
                     lines.add(String.format("==== World '%s' ====", world.getName()));
                     lines.add(String.format("Lost Villagers: %d", lostVillage.getVillagers().size()));
-                    lines.add(String.format("Lost Iron Golems: %d", lostVillage.getIronGolems().size()));
-                    lines.add(String.format("Lost Cats: %d", lostVillage.getCats().size()));
+                    lines.add(String.format("Lost Iron Golems: %d%s",
+                            lostVillage.getNaturalIronGolems().size(), getUserOwnedMessage(lostVillage.getUserIronGolems().size())));
+                    lines.add(String.format("Lost Cats: %d%s",
+                            lostVillage.getNaturalCats().size(), getUserOwnedMessage(lostVillage.getUserCats().size())));
                     switch (infoType) {
                         case BEDS:
                             lines.add("/* Sorry, but all the beds can't be displayed");
@@ -344,8 +344,12 @@ public class VillageInfo {
                             lines.add(String.format("== World '%s', village #%d ==", world.getName(), villageId));
                             lines.add(String.format("  Beds: %d", village.getBedHeads().size()));
                             lines.add(String.format("  Villagers: %d/%d", village.getVillagers().size(), village.getVillagersLimit()));
-                            lines.add(String.format("  Iron Golems: %d/%d", village.getIronGolems().size(), village.getIronGolemsLimit()));
-                            lines.add(String.format("  Cats: %d/%d", village.getCats().size(), village.getCatsLimit()));
+                            lines.add(String.format("  Iron Golems: %d/%d%s",
+                                    village.getNaturalIronGolems().size(), village.getNaturalIronGolemsLimit(),
+                                    getUserOwnedMessage(village.getUserIronGolems().size())));
+                            lines.add(String.format("  Cats: %d/%d%s",
+                                    village.getNaturalCats().size(), village.getNaturalCatsLimit(),
+                                    getUserOwnedMessage(village.getUserCats().size())));
                             switch (infoType) {
                                 case BEDS:
                                     final PlainMapViewer viewer = new PlainMapViewer(scale);
@@ -361,11 +365,11 @@ public class VillageInfo {
                                     break;
 
                                 case GOLEMS:
-                                    lines.addAll(getViewTextLines(village.getIronGolems(), scale));
+                                    lines.addAll(getViewTextLines(village.getAllIronGolems(), scale));
                                     break;
 
                                 case CATS:
-                                    lines.addAll(getViewTextLines(village.getCats(), scale));
+                                    lines.addAll(getViewTextLines(village.getAllCats(), scale));
                                     break;
                             }
                         }
@@ -397,5 +401,13 @@ public class VillageInfo {
             consumer.accept(endTime - startTime);
         }
         return result;
+    }
+
+    private String getUserOwnedMessage(int size) {
+        if(size > 0) {
+            return String.format(" (+%d user owned)", size);
+        } else {
+            return "";
+        }
     }
 }
