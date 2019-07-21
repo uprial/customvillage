@@ -21,4 +21,9 @@ public class UpdateCron extends AbstractCron {
     public void run() {
         plugin.updateInfo();
     }
+
+    @Override
+    boolean isEnabled() {
+        return plugin.getCustomVillageConfig().isEnabled();
+    }
 }

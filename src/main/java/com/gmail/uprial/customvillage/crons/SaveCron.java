@@ -21,4 +21,9 @@ public class SaveCron extends AbstractCron {
     public void run() {
         plugin.saveInfo();
     }
+
+    @Override
+    boolean isEnabled() {
+        return plugin.getCustomVillageConfig().isEnabled();
+    }
 }

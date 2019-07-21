@@ -23,9 +23,7 @@ abstract class AbstractCron implements Runnable {
         setEnabled(isEnabled());
     }
 
-    private boolean isEnabled() {
-        return plugin.getCustomVillageConfig().isEnabled();
-    }
+    abstract boolean isEnabled();
 
     private void setEnabled(final boolean enabled) {
         if(this.enabled != enabled) {
