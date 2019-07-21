@@ -60,7 +60,13 @@ class ClusterAggregator {
     }
 
     <T extends Entity> Integer getEntityClusterId(final T entity) {
-        return regionCluster.get(getRegion(entity.getLocation().toVector()));
+        Vector region = getRegion(entity.getLocation().toVector());
+        Integer clusterId = regionCluster.get(region);
+        if(clusterId == null) {
+            clusterId = findNearClusterId(regionCluster, region);
+        }
+
+        return clusterId;
     }
 
     <T extends Entity> List<T> fetchEntities(final Class<T> tClass, final BiConsumer<Integer,T> consumer) {
@@ -185,7 +191,7 @@ class ClusterAggregator {
         for (int x = x1; x <= x2; x++) {
             for (int y = y1; y <= y2; y++) {
                 for (int z = z1; z <= z2; z++) {
-                    Block block = world.getBlockAt(x, y, z);
+                    final Block block = world.getBlockAt(x, y, z);
                     if(toAdd.apply(block)) {
                         blocks.add(block);
                     }
@@ -268,7 +274,7 @@ class ClusterAggregator {
         }
     }
 
-    private Integer findNearClusterId(RegionCluster regionCluster, Vector region) {
+    private Integer findNearClusterId(final RegionCluster regionCluster, final Vector region) {
         final AtomicInteger minNearClusterId = new AtomicInteger(-1);
         fetchNearRegions(region, (nearRegion) -> {
             if (!nearRegion.equals(region)) {
