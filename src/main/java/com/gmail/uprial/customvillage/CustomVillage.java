@@ -91,10 +91,12 @@ public final class CustomVillage extends JavaPlugin {
     }
 
     public void saveInfo() {
+        // customVillageConfig.isEnabled() is checked in the cron task
         villageInfo.save();
     }
 
     public void updateInfo() {
+        // customVillageConfig.isEnabled() is checked in the cron task
         villageInfo.update();
     }
 
