@@ -66,7 +66,7 @@ class ClusterAggregator {
     <T extends Entity> List<T> fetchEntities(final Class<T> tClass, final BiConsumer<Integer,T> consumer) {
         final List<T> lostEntities = new ArrayList<>();
         for (final T entity : world.getEntitiesByClass(tClass)) {
-            final Integer clusterId = regionCluster.get(getRegion(entity.getLocation().toVector()));
+            final Integer clusterId = getEntityClusterId(entity);
             if(clusterId != null) {
                 consumer.accept(clusterId, entity);
             } else {
