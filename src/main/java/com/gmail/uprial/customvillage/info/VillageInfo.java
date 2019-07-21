@@ -258,7 +258,7 @@ public class VillageInfo {
             final Integer villageId = entry.getKey();
             if (villageId.equals(LOST_VILLAGE_ID)) {
                 // do nothing
-            } else if (!aggregator.isFullyLoaded(villageId)) {
+            } else if (!aggregator.isClusterFullyLoaded(villageId)) {
                 customLogger.debug(String.format("Village #%d is not fully loaded", villageId));
             } else {
                 final Village village = entry.getValue();

@@ -153,7 +153,7 @@ class ClusterAggregator {
         calculateClusterArea();
     }
 
-    boolean isFullyLoaded(final int clusterId) {
+    boolean isClusterFullyLoaded(final int clusterId) {
         final Area area = getArea(clusterId);
         for(Vector region : area) {
             if(!isRegionLoaded(region)) {
