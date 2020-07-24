@@ -88,10 +88,9 @@ class PlainMapViewer {
                 maxVector.maximize(vector);
             }
         }
-
         // Calculate max numbers lengths.
-        final int xDigits = (int)Math.log10(Math.max(Math.abs(minVector.x * scale), Math.abs(maxVector.x * scale))) + 1;
-        final int yDigits = (int)Math.log10(Math.max(Math.abs(minVector.y * scale), Math.abs(maxVector.y * scale))) + 1;
+        final int xDigits = getDigits(Math.max(Math.abs(minVector.x * scale), Math.abs(maxVector.x * scale)));
+        final int yDigits = getDigits(Math.max(Math.abs(minVector.y * scale), Math.abs(maxVector.y * scale)));
 
         // Initialize an array.
         final List<String> lines = new ArrayList<>(maxVector.y - minVector.y + 1 + yDigits + 2);
@@ -150,6 +149,14 @@ class PlainMapViewer {
             return (char) ((value - 10) + 'a');
         } else {
             return '+';
+        }
+    }
+
+    private int getDigits(final int value) {
+        if (value > 0) {
+            return (int)Math.floor(Math.log10(value)) + 1;
+        } else {
+            return 1;
         }
     }
 

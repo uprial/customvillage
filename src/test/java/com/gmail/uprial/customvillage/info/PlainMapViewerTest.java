@@ -80,6 +80,16 @@ public class PlainMapViewerTest {
     }
 
     @Test
+    public void testMapNearZero() throws Exception {
+        viewer.add(7, 0);
+
+        assertEquals("    \n" +
+                "   0\n" +
+                "    \n" +
+                " 0 1", getText());
+    }
+
+    @Test
     public void testToString() throws Exception {
         viewer.add(-10, -10);
         viewer.add(20, 20);
