@@ -91,7 +91,19 @@ public class VillageInfo {
                 final ClusterAggregator aggregator = getOrCreateAggregator(entity.getWorld());
                 final Integer villageId = aggregator.getEntityClusterId(entity);
                 if(villageId == null) {
-                    return true;
+                    if(spawnReason.equals(CreatureSpawnEvent.SpawnReason.CURED)) {
+                        // Players can cure zombie-villagers to build a new village.
+                        // Please refer to https://minecraft.gamepedia.com/Tutorials/Curing_a_zombie_villager.
+                        //
+                        // When a player tries to cure a zombie-villager and there are no other villagers nearby,
+                        // a village can't be detected.
+                        //
+                        // The current condition allows the player to cure the first zombie-villager.
+                        customLogger.debug(String.format("Curing of %s is allowed as an exception", format(entity)));
+                        return false;
+                    } else {
+                        return true;
+                    }
                 }
                 final Village village = getOrCreateVillages(entity.getWorld()).get(villageId);
 
