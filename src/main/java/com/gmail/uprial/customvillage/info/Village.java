@@ -15,9 +15,12 @@ import java.util.List;
 class Village {
 
     // https://minecraft.gamepedia.com/Cat
+    // One cat spawns for every four valid beds, with a maximum of 10 cats.
     private static final int MAX_CATS = 10;
+    private static final int VILLAGERS_PER_CAT = 4;
     // https://minecraft.gamepedia.com/Iron_Golem
-    private static final int VILLAGERS_PER_GOLEM = 4;
+    // One iron golem can now spawn for every 10 villagers in a village.
+    private static final int VILLAGERS_PER_GOLEM = 10;
 
     private final List<Villager> villagers = new ArrayList<>();
     private final List<IronGolem> naturalIronGolems = new ArrayList<>();
@@ -107,7 +110,7 @@ class Village {
     }
 
     int getNaturalCatsLimit() {
-        return MAX_CATS;
+        return Math.min(MAX_CATS, Math.min(getVillagersLimit(), villagers.size()) / VILLAGERS_PER_CAT);
     }
 
     void addCat(final Cat cat) {
