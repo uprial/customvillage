@@ -27,16 +27,17 @@ All village-decisive entities: beds, golems, cats, villagers - are clustered in 
 All clusters in a square radius of 1 form one village.
 
 For example, if there are four villagers in the following X, Y, and Z coordinates:
-Villager #1: 100, 50, 100 (cluster coordinates 4, 10, 4)
-Villager #2: 150, 50, 150 (cluster coordinates 5, 10, 5)
-Villager #3: 200, 50, 200 (cluster coordinates 6, 10, 6)
-Villager #4: 250, 50, 250 (cluster coordinates 8, 10, 8)
+
+- Villager #1: 100, 50, 100 (cluster coordinates 4, 10, 4)
+- Villager #2: 150, 50, 150 (cluster coordinates 5, 10, 5)
+- Villager #3: 200, 50, 200 (cluster coordinates 6, 10, 6)
+- Villager #4: 250, 50, 250 (cluster coordinates 8, 10, 8)
 
 The #1 and #2 villagers are considered as the villagers of the same village. The #3 and #4 villagers belong to their own villages.
 
 If the square radius was 2, villager #3 would join #1 and #2 villagers in their village, and villager #4 would still belong to another village.
 
-Now, each village as a set of clusters has its own limit of entities enforced.
+Then, each village as a set of clusters enforces its own limit of entities.
 
 ## Commands
 
