@@ -80,6 +80,24 @@ public class PlainMapViewerTest {
     }
 
     @Test
+    public void testBigMapBelowZero() throws Exception {
+        viewer.add(-112, 8);
+        viewer.add(-96, 0);
+        for (int i = 0; i < 15; i++) {
+            viewer.add(-32, 16);
+        }
+
+        assertEquals("    -----------\n" +
+                "    11000000000\n" +
+                "    10988765443\n" +
+                "    24680246802\n" +
+                "               \n" +
+                "  0   1        \n" +
+                "  8 1          \n" +
+                " 16           f", getText());
+    }
+
+    @Test
     public void testMapNearZero() throws Exception {
         viewer.add(7, 0);
 
