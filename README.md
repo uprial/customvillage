@@ -22,7 +22,7 @@ I ended up with a mess of hundreds of illegal entities on the map. Fortunately, 
 
 ## Limit mechanics.
 
-All village-decisive entities: beds, golems, cats, villagers - are clustered in clusters of 32x5x32 size for X, Y, and Z coordinates.
+All village-decisive entities: beds, golems, cats, villagers - are clustered in clusters of 32x12x32 size for X, Y, and Z coordinates.
 
 All clusters in a square radius of 1 form one village.
 

@@ -27,7 +27,7 @@ public class VillageInfo {
         T call();
     }
 
-    private static final Vector CLUSTER_SCALE = new Vector(32, 5, 32);
+    private static final Vector CLUSTER_SCALE = new Vector(32, 12, 32);
     private static final int CLUSTER_SEARCH_DEPTH = 1;
 
     private final CustomVillage plugin;
@@ -102,6 +102,7 @@ public class VillageInfo {
                         customLogger.debug(String.format("Curing of %s is allowed as an exception", format(entity)));
                         return false;
                     } else {
+                        customLogger.debug(String.format("Spawn attempt of %s outside of any village", format(entity)));
                         return true;
                     }
                 }

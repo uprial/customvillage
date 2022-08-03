@@ -10,7 +10,7 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class ClusterAggregatorTest {
-    private static final Vector TEST_CLUSTER_SCALE = new Vector(32, 5, 32);
+    private static final Vector TEST_CLUSTER_SCALE = new Vector(32, 12, 32);
     private static final int TEST_CLUSTER_SEARCH_DEPTH = 1;
 
     private class TestClusterAggregator extends ClusterAggregator {
@@ -49,7 +49,7 @@ public class ClusterAggregatorTest {
             add(new Vector(1, 4, 1));
             add(new Vector(0, 0, 0));
 
-            add(new Vector(1, 5, 1));
+            add(new Vector(1, 12, 1));
             add(new Vector(0, 1, 0));
 
             add(new Vector(1, 1, 31));
@@ -281,7 +281,7 @@ public class ClusterAggregatorTest {
             add(new Vector(2, 2, 2));
             add(new Vector(4, 4, 4));
         }});
-        assertEquals("{world=null, searchDepth=1, scale=32.0,5.0,32.0, dump={2:2:2=1, 4:4:4=2}}", aggregator.toString());
+        assertEquals("{world=null, searchDepth=1, scale=32.0,12.0,32.0, dump={2:2:2=1, 4:4:4=2}}", aggregator.toString());
     }
 
     @Test
