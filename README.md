@@ -42,7 +42,7 @@ Then, each village as a set of clusters enforces its own limit of entities.
 ## Commands
 
 * `customvillage reload` - reload config from disk
-* `customvillage info [villagers|golems|cats|beds;default=villagers] [@scale;default=8]` - show information
+* `customvillage info info [@type : villagers(default) | golems | cats | beds] [@loaded : fully | partially(default) | no] [@scale; default=8] ` - show information
 * `customvillage optimize` - removes excessive villagers, iron golems and cats
 
 ## Permissions
