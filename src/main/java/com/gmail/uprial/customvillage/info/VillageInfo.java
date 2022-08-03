@@ -312,11 +312,12 @@ public class VillageInfo {
         return removed;
     }
 
-    public List<String> getTextLines(final VillageInfoType infoType, final Integer scale) {
+    public List<String> getTextLines(final VillageInfoType infoType, final ClusterLoaded clusterLoaded, final Integer scale) {
         return measureTime(() -> {
             final List<String> lines = new ArrayList<>();
             for (final World world : plugin.getServer().getWorlds()) {
-                Villages villages = getVillages(world);
+                final ClusterAggregator aggregator = getOrCreateAggregator(world);
+                final Villages villages = getVillages(world);
                 final Village lostVillage = villages.get(LOST_VILLAGE_ID);
 
                 // villages.size() is always greater than 1 because of the LostVillage item.
@@ -330,19 +331,22 @@ public class VillageInfo {
                             lostVillage.getNaturalCats().size(), getUserOwnedMessage(lostVillage.getUserCats().size())));
                     switch (infoType) {
                         case BEDS:
-                            lines.add("/* Sorry, but all the beds can't be displayed");
+                            lines.add("/* Sorry, but all the loaded beds can't be displayed");
                             lines.add("   due to performance reasons. */");
                             break;
 
                         case VILLAGERS:
+                            lines.add("Loaded Villagers:");
                             lines.addAll(getViewTextLines(world.getEntitiesByClass(Villager.class), scale));
                             break;
 
                         case GOLEMS:
+                            lines.add("Loaded Iron Golems:");
                             lines.addAll(getViewTextLines(world.getEntitiesByClass(IronGolem.class), scale));
                             break;
 
                         case CATS:
+                            lines.add("Loaded Cats:");
                             lines.addAll(getViewTextLines(world.getEntitiesByClass(Cat.class), scale));
                             break;
                     }
@@ -352,6 +356,16 @@ public class VillageInfo {
                         final Integer villageId = entry.getKey();
                         if (!villageId.equals(LOST_VILLAGE_ID)) {
                             final Village village = entry.getValue();
+                            final ClusterLoaded villageClusterLoaded = aggregator.getClusterLoaded(villageId);
+                            if(
+                                    ((clusterLoaded.equals(ClusterLoaded.FULLY)
+                                            && !villageClusterLoaded.equals(ClusterLoaded.FULLY)))
+                                ||
+                                    ((clusterLoaded.equals(ClusterLoaded.PARTIALLY)
+                                            && villageClusterLoaded.equals(ClusterLoaded.NO)))
+                            ) {
+                                continue;
+                            }
 
                             lines.add(String.format("== World '%s', village #%d ==", world.getName(), villageId));
                             lines.add(String.format("  Beds: %d", village.getBedHeads().size()));
@@ -362,6 +376,7 @@ public class VillageInfo {
                             lines.add(String.format("  Cats: %d/%d%s",
                                     village.getNaturalCats().size(), village.getNaturalCatsLimit(),
                                     getUserOwnedMessage(village.getUserCats().size())));
+                            lines.add("  Loaded: " + villageClusterLoaded);
                             switch (infoType) {
                                 case BEDS:
                                     final PlainMapViewer viewer = new PlainMapViewer(scale);

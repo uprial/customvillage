@@ -4,6 +4,7 @@ import com.gmail.uprial.customvillage.common.CustomLogger;
 import com.gmail.uprial.customvillage.config.InvalidConfigException;
 import com.gmail.uprial.customvillage.crons.SaveCron;
 import com.gmail.uprial.customvillage.crons.UpdateCron;
+import com.gmail.uprial.customvillage.info.ClusterLoaded;
 import com.gmail.uprial.customvillage.info.VillageInfo;
 import com.gmail.uprial.customvillage.info.VillageInfoType;
 import com.gmail.uprial.customvillage.listeners.CustomVillageBlocksListener;
@@ -86,8 +87,8 @@ public final class CustomVillage extends JavaPlugin {
         return YamlConfiguration.loadConfiguration(configFile);
     }
 
-    List<String> getVillageInfoTextLines(final VillageInfoType infoType, final Integer scale) {
-        return villageInfo.getTextLines(infoType, scale);
+    List<String> getVillageInfoTextLines(final VillageInfoType infoType, final ClusterLoaded clusterLoaded, final Integer scale) {
+        return villageInfo.getTextLines(infoType, clusterLoaded, scale);
     }
 
     public void saveInfo() {

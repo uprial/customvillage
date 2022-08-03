@@ -170,6 +170,25 @@ class ClusterAggregator {
         return true;
     }
 
+    ClusterLoaded getClusterLoaded(final int clusterId) {
+        final Area area = getArea(clusterId);
+
+        int loadedRegionsCount = 0;
+        for(Vector region : area) {
+            if(isRegionLoaded(region)) {
+                loadedRegionsCount++;
+            }
+        }
+
+        if(loadedRegionsCount == 0) {
+            return ClusterLoaded.NO;
+        } else if (loadedRegionsCount < area.size()) {
+            return ClusterLoaded.PARTIALLY;
+        } else {
+            return ClusterLoaded.FULLY;
+        }
+    }
+
     // ==== PRIVATE METHODS ====
 
     private List<Block> getBlocksInRegion(final Vector region, final Function<Block, Boolean> toAdd) {

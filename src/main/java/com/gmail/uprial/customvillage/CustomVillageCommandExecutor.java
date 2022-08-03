@@ -1,6 +1,7 @@
 package com.gmail.uprial.customvillage;
 
 import com.gmail.uprial.customvillage.common.CustomLogger;
+import com.gmail.uprial.customvillage.info.ClusterLoaded;
 import com.gmail.uprial.customvillage.info.VillageInfoType;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.command.Command;
@@ -12,6 +13,7 @@ class CustomVillageCommandExecutor implements CommandExecutor {
 
     private static final int DEFAULT_SCALE = 8;
     private static final VillageInfoType DEFAULT_INFO_TYPE = VillageInfoType.VILLAGERS;
+    private static final ClusterLoaded DEFAULT_CLUSTER_LOADED = ClusterLoaded.PARTIALLY;
 
     private final CustomVillage plugin;
 
@@ -43,17 +45,27 @@ class CustomVillageCommandExecutor implements CommandExecutor {
                     } else {
                         infoType = DEFAULT_INFO_TYPE;
                     }
-                    Integer scale;
+                    ClusterLoaded clusterLoaded;
                     if (args.length >= 3) {
                         try {
-                            scale = Integer.valueOf(args[2]);
+                            clusterLoaded = ClusterLoaded.valueOf(args[2].toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            return false;
+                        }
+                    } else {
+                        clusterLoaded = DEFAULT_CLUSTER_LOADED;
+                    }
+                    Integer scale;
+                    if (args.length >= 4) {
+                        try {
+                            scale = Integer.valueOf(args[3]);
                         } catch (NumberFormatException e) {
                             return false;
                         }
                     } else {
                         scale = DEFAULT_SCALE;
                     }
-                    customLogger.info("\n" + StringUtils.join(plugin.getVillageInfoTextLines(infoType, scale), "\n"));
+                    customLogger.info("\n" + StringUtils.join(plugin.getVillageInfoTextLines(infoType, clusterLoaded, scale), "\n"));
                     return true;
                 }
             }
@@ -70,7 +82,7 @@ class CustomVillageCommandExecutor implements CommandExecutor {
                     helpString += '/' + COMMAND_NS + " reload - reload config from disk\n";
                 }
                 if (sender.hasPermission(COMMAND_NS + ".info")) {
-                    helpString += '/' + COMMAND_NS + " info [villagers|golems|cats|beds;default=villagers] [@scale;default=8] - show information\n";
+                    helpString += '/' + COMMAND_NS + " info [@type : villagers(default) | golems | cats | beds] [@loaded : fully | partially(default) | no] [@scale; default=8] - show information\n";
                 }
                 if (sender.hasPermission(COMMAND_NS + ".optimize")) {
                     helpString += '/' + COMMAND_NS + " optimize - removes excessive villagers, iron golems and cats\n";
