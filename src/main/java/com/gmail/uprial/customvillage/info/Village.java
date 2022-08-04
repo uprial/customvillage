@@ -2,7 +2,6 @@ package com.gmail.uprial.customvillage.info;
 
 // https://minecraft.gamepedia.com/Cat
 
-import com.google.common.collect.ImmutableList;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Cat;
 import org.bukkit.entity.Entity;
@@ -46,8 +45,9 @@ class Village {
 
         // ==== VILLAGERS ====
 
-    ImmutableList<Villager> getVillagers() {
-        return ImmutableList.copyOf(villagers);
+    // Must be MUTABLE List because can be optimized.
+    List<Villager> getVillagers() {
+        return villagers;
     }
 
     int getVillagersLimit() {
@@ -64,16 +64,17 @@ class Village {
 
     // ==== IRON GOLEMS ====
 
-    ImmutableList<IronGolem> getNaturalIronGolems() {
-        return ImmutableList.copyOf(naturalIronGolems);
+    // Must be MUTABLE List because can be optimized.
+    List<IronGolem> getNaturalIronGolems() {
+        return naturalIronGolems;
     }
 
-    ImmutableList<IronGolem> getUserIronGolems() {
-        return ImmutableList.copyOf(userIronGolems);
+    List<IronGolem> getUserIronGolems() {
+        return userIronGolems;
     }
 
-    ImmutableList<IronGolem> getAllIronGolems() {
-        return ImmutableList.copyOf(allIronGolems);
+    List<IronGolem> getAllIronGolems() {
+        return allIronGolems;
     }
 
     int getNaturalIronGolemsLimit() {
@@ -97,16 +98,17 @@ class Village {
 
     // ==== CATS ====
 
-    ImmutableList<Cat> getNaturalCats() {
-        return ImmutableList.copyOf(naturalCats);
+    // Must be MUTABLE List because can be optimized.
+    List<Cat> getNaturalCats() {
+        return naturalCats;
     }
 
-    ImmutableList<Cat> getUserCats() {
-        return ImmutableList.copyOf(userCats);
+    List<Cat> getUserCats() {
+        return userCats;
     }
 
-    ImmutableList<Cat> getAllCats() {
-        return ImmutableList.copyOf(allCats);
+    List<Cat> getAllCats() {
+        return allCats;
     }
 
     int getNaturalCatsLimit() {
@@ -130,8 +132,8 @@ class Village {
 
     // ==== BEDS ====
 
-    ImmutableList<Block> getBedHeads() {
-        return ImmutableList.copyOf(bedHeads);
+    List<Block> getBedHeads() {
+        return bedHeads;
     }
 
     void addAllBedHeads(final List<Block> newnBedHeads) {

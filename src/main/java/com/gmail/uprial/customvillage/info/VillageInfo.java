@@ -241,6 +241,7 @@ public class VillageInfo {
                 entity.remove();
                 removed++;
             }
+            entities.clear();
         }
 
         return removed;
