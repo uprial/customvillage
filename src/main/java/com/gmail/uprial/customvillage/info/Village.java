@@ -136,8 +136,8 @@ class Village {
         return bedHeads;
     }
 
-    void addAllBedHeads(final List<Block> newnBedHeads) {
-        bedHeads.addAll(newnBedHeads);
+    void addAllBedHeads(final List<Block> newBedHeads) {
+        bedHeads.addAll(newBedHeads);
     }
 
     // ==== PRIVATE METHODS ====
