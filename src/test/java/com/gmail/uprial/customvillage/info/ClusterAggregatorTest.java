@@ -296,6 +296,33 @@ public class ClusterAggregatorTest {
         assertEquals("{2:2:2=1, 4:4:4=2}", getText());
     }
 
+    @Test
+    public void testReadme() throws Exception {
+        List<Vector> list = new ArrayList<Vector>() {{
+            add(new Vector(100, 50, 100));
+            add(new Vector(3, 4, 3));
+
+            add(new Vector(150, 50, 150));
+            add(new Vector(4, 4, 4));
+
+            add(new Vector(200, 50, 200));
+            add(new Vector(6, 4, 6));
+
+            add(new Vector(250, 50, 250));
+            add(new Vector(7, 4, 7));
+        }};
+
+        for (int i = 0; i < list.size() / 2; i++) {
+            assertEquals(list.get(i * 2 + 1).toString(),
+                    aggregator.getRegion(list.get(i * 2)).toString());
+
+            final PopulationMap populationMap = new PopulationMap();
+            populationMap.add(aggregator.getRegion(list.get(i * 2)));
+            aggregator.populate(populationMap);
+        }
+        assertEquals("{3:4:3=1, 7:4:7=2}", getText());
+    }
+
     // ==== PRIVATE METHODS ====
 
     private String getText() {
