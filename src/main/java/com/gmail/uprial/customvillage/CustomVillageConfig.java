@@ -20,7 +20,7 @@ public final class CustomVillageConfig {
         return enabled;
     }
 
-    static CustomVillageConfig getFromConfig(FileConfiguration config, CustomLogger customLogger) throws InvalidConfigException {
+    public static CustomVillageConfig getFromConfig(FileConfiguration config, CustomLogger customLogger) throws InvalidConfigException {
         boolean enabled = ConfigReaderSimple.getBoolean(config, customLogger, "enabled", "'enabled' flag", true);
 
         return new CustomVillageConfig(enabled);

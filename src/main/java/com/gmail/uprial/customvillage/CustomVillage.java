@@ -119,7 +119,7 @@ public final class CustomVillage extends JavaPlugin {
         }
     }
 
-    private static CustomVillageConfig loadConfig(FileConfiguration config, CustomLogger customLogger) {
+    static CustomVillageConfig loadConfig(FileConfiguration config, CustomLogger customLogger) {
         return loadConfig(config, customLogger, null);
     }
 
