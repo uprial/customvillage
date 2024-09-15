@@ -8,7 +8,7 @@ import org.junit.rules.ExpectedException;
 
 import static org.junit.Assert.*;
 
-public class TakeAimConfigTest extends TestConfigBase {
+public class CustomVillageConfigTest extends TestConfigBase {
     @Rule
     public final ExpectedException e = ExpectedException.none();
 
