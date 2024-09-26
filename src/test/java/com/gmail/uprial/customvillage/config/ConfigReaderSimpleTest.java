@@ -29,6 +29,13 @@ public class ConfigReaderSimpleTest extends TestConfigBase {
     }
 
     @Test
+    public void testEmptyBooleanNoDefaultValue() throws Exception {
+        e.expect(InvalidConfigException.class);
+        e.expectMessage("Empty 'value' flag");
+        getBoolean(getPreparedConfig(""), getDebugFearingCustomLogger(), "f", "'value' flag");
+    }
+
+    @Test
     public void testInvalidBoolean() throws Exception {
         e.expect(InvalidConfigException.class);
         e.expectMessage("Invalid 'value' flag");
