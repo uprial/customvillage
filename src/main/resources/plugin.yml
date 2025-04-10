@@ -1,6 +1,6 @@
 name: CustomVillage
 main: com.gmail.uprial.customvillage.CustomVillage
-version: 0.1.9
+version: 0.1.10
 commands:
   customvillage:
       description: Reload CustomVillage config

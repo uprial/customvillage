@@ -281,7 +281,7 @@ public class ClusterAggregatorTest {
             add(new Vector(2, 2, 2));
             add(new Vector(4, 4, 4));
         }});
-        assertEquals("{world=null, searchDepth=1, scale=32.0,12.0,32.0, dump={2:2:2=1, 4:4:4=2}}", aggregator.toString());
+        assertEquals("{world=null, scale=32.0,12.0,32.0, search-depth=1, dump={2:2:2=1, 4:4:4=2}}", aggregator.toString());
     }
 
     @Test

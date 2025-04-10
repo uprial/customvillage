@@ -12,6 +12,7 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.util.Vector;
 
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -175,36 +176,58 @@ public class VillageInfo {
         // Populate villages
         final Villages villages = getOrCreateVillages(world);
         villages.clear();
-        for (final Integer villageId : aggregator.getAllClusterIds()) {
-            final Village village = new Village();
-            villages.put(villageId, village);
 
-            village.addAllBedHeads(aggregator.getBlocksInCluster(villageId, (Block block) -> {
-                if (block.getBlockData() instanceof org.bukkit.block.data.type.Bed) {
-                    final org.bukkit.block.data.type.Bed bed = (org.bukkit.block.data.type.Bed) block.getBlockData();
-                    return (bed.getPart() == Bed.Part.HEAD);
-                }
-                return false;
-            }));
-        }
+        final Function<Integer,Village> vg
+                = (Integer villageId)
+                -> villages.computeIfAbsent(villageId, (k) -> new Village());
 
         final Village lostVillage = new Village();
         // Count villagers
         lostVillage.addAllVillagers(aggregator.fetchEntities(Villager.class, (villageId, villager) -> {
-            villages.get(villageId).addVillager(villager);
+            vg.apply(villageId).addVillager(villager);
         }));
 
         // Count ironGolems
         lostVillage.addAllIronGolems(aggregator.fetchEntities(IronGolem.class, (villageId, ironGolem) -> {
-            villages.get(villageId).addIronGolem(ironGolem);
+            vg.apply(villageId).addIronGolem(ironGolem);
         }));
 
         // Count cats
         lostVillage.addAllCats(aggregator.fetchEntities(Cat.class, (villageId, cat) -> {
-            villages.get(villageId).addCat(cat);
+            vg.apply(villageId).addCat(cat);
         }));
 
         villages.put(LOST_VILLAGE_ID, lostVillage);
+
+        /*
+            This search for bed heads must be after the search for entities,
+            because some entities may be from existing villages
+            located in unloaded chunks.
+
+            See the experimental performance optimization below.
+         */
+        for (final Integer villageId : aggregator.getAllClusterIds()) {
+            /*
+                An experimental performance optimization:
+                if a cluster is fully unloaded,
+                villagers or other units can't be loaded,
+                so there is no reason to process the cluster for now.
+
+                Otherwise, it takes too long for the server to start with big maps.
+            */
+            if(villages.containsKey(villageId)
+                    || !aggregator.getClusterLoaded(villageId).equals(ClusterLoaded.NO)) {
+
+                vg.apply(villageId).addAllBedHeads(aggregator.getBlocksInCluster(villageId, (Block block) -> {
+                    if (block.getBlockData() instanceof org.bukkit.block.data.type.Bed) {
+                        final org.bukkit.block.data.type.Bed bed
+                                = (org.bukkit.block.data.type.Bed) block.getBlockData();
+                        return (bed.getPart() == Bed.Part.HEAD);
+                    }
+                    return false;
+                }));
+            }
+        }
 
         return villages;
     }
@@ -404,6 +427,10 @@ public class VillageInfo {
                         }
                     }
                 }
+            }
+
+            if(lines.isEmpty()) {
+                lines.add("No loaded villages.");
             }
 
             return lines;

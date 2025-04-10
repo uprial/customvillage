@@ -159,6 +159,10 @@ class ClusterAggregator {
         calculateClusterArea();
     }
 
+    /*
+        This method could be replaced via getClusterLoaded() == ClusterLoaded.FULLY,
+        but getClusterLoaded() fetches all regions, which is less efficient.
+     */
     boolean isClusterFullyLoaded(final int clusterId) {
         final Area area = getArea(clusterId);
         for(Vector region : area) {
@@ -231,8 +235,13 @@ class ClusterAggregator {
     }
 
     void populate(final PopulationMap populationMap) {
-        // Some regions aren't loaded, so we need to keep them in the database though there are no entities loaded there.
-        // ClusterId is an auto-increment value, so we need to calculate the max existing id.
+        /*
+            Some regions aren't loaded,
+            so we need to keep them in the database though there are no entities loaded there.
+
+            ClusterId is an auto-increment value,
+            so we need to calculate the max existing id.
+         */
         int unloadedMaxClusterId = 0;
         final RegionCluster newRegionCluster = new RegionCluster();
         for (final Map.Entry<Vector, Integer> entry : regionCluster.entrySet()) {
@@ -245,7 +254,10 @@ class ClusterAggregator {
             }
         }
 
-        // In order to keep the stable ClusterId distribution, we need to keep the original ids when it's possible.
+        /*
+            In order to keep the stable ClusterId distribution,
+            we need to keep the original ids when it's possible.
+         */
         final RegionCluster origRegionCluster = new RegionCluster(regionCluster);
         boolean isFixed = false;
         while (!isFixed) {
@@ -354,10 +366,10 @@ class ClusterAggregator {
 
     @Override
     public String toString() {
-        final Map<String,String> map = new HashMap<>();
-        map.put("world", String.valueOf(world));
+        final Map<String,String> map = new LinkedHashMap<>();
+        map.put("world", world == null ? "null" : world.getName());
         map.put("scale", scale.toString());
-        map.put("searchDepth", String.valueOf(searchDepth));
+        map.put("search-depth", String.valueOf(searchDepth));
         map.put("dump", getDump().toString());
 
         return map.toString();

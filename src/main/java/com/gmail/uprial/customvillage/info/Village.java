@@ -150,4 +150,16 @@ class Village {
     private static boolean isUser(final Cat cat) {
         return cat.isTamed();
     }
+
+    // ==== COMMON METHODS ====
+
+    @Override
+    public String toString() {
+        return String.format("Village{villagers: %d, bed-heads: %d, " +
+                "iron-golems{natural: %d, user: %d, all: %d}, " +
+                       "cats{natural: %d, user: %d, all: %d}}",
+                villagers.size(), bedHeads.size(),
+                naturalIronGolems.size(), userIronGolems.size(), allIronGolems.size(),
+                naturalCats.size(), userCats.size(), allCats.size());
+    }
 }
