@@ -12,9 +12,9 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.util.Vector;
 
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.gmail.uprial.customvillage.common.Formatter.format;
 import static com.gmail.uprial.customvillage.info.Village.isUserEntity;
@@ -23,9 +23,17 @@ public class VillageInfo {
     private static final int LOST_VILLAGE_ID = -1;
 
     private class Villages extends HashMap<Integer,Village> {
-    }
-    public interface Func<T> {
-        T call();
+
+        void callIfExists(final Integer villageId, final LivingEntity entity, final Consumer<Village> func) {
+            final Village village = get(villageId);
+            if(village == null) {
+                // The only purpose of passing entity is to write a good warning message.
+                somethingWentWrong(String.format("we gonna try to put %s into a village #%d",
+                        format(entity), villageId));
+            } else {
+                func.accept(village);
+            }
+        }
     }
 
     private static final Vector CLUSTER_SCALE = new Vector(32, 12, 32);
@@ -177,57 +185,53 @@ public class VillageInfo {
         final Villages villages = getOrCreateVillages(world);
         villages.clear();
 
-        final Function<Integer,Village> vg
-                = (Integer villageId)
-                -> villages.computeIfAbsent(villageId, (k) -> new Village());
+        for (final Integer villageId : aggregator.getAllClusterIds()) {
+            /*
+                Counting bed heads in not yet even partially loaded clusters
+                takes a lot of time on big maps:
+                it loads or even generates (after map cleanup) unloaded map chunks.
+
+                An experimental performance optimization:
+                if a cluster is not yet even partially loaded,
+                no reason to count bed heads.
+
+                However, entities may be loaded in not yet even partially loaded clusters,
+                which can be checked via "villages" existence.
+            */
+            if(aggregator.getClusterLoaded(villageId).equals(ClusterLoaded.NO)) {
+                continue;
+            }
+
+            final Village village = new Village();
+            villages.put(villageId, village);
+
+            village.addAllBedHeads(aggregator.getBlocksInCluster(villageId, (Block block) -> {
+                if (block.getBlockData() instanceof org.bukkit.block.data.type.Bed) {
+                    final org.bukkit.block.data.type.Bed bed
+                            = (org.bukkit.block.data.type.Bed) block.getBlockData();
+                    return (bed.getPart() == Bed.Part.HEAD);
+                }
+                return false;
+            }));
+        }
 
         final Village lostVillage = new Village();
+        villages.put(LOST_VILLAGE_ID, lostVillage);
+
         // Count villagers
         lostVillage.addAllVillagers(aggregator.fetchEntities(Villager.class, (villageId, villager) -> {
-            vg.apply(villageId).addVillager(villager);
+            villages.callIfExists(villageId, villager, (final Village village) -> village.addVillager(villager));
         }));
 
         // Count ironGolems
         lostVillage.addAllIronGolems(aggregator.fetchEntities(IronGolem.class, (villageId, ironGolem) -> {
-            vg.apply(villageId).addIronGolem(ironGolem);
+            villages.callIfExists(villageId, ironGolem, (final Village village) -> village.addIronGolem(ironGolem));
         }));
 
         // Count cats
         lostVillage.addAllCats(aggregator.fetchEntities(Cat.class, (villageId, cat) -> {
-            vg.apply(villageId).addCat(cat);
+            villages.callIfExists(villageId, cat, (final Village village) -> village.addCat(cat));
         }));
-
-        villages.put(LOST_VILLAGE_ID, lostVillage);
-
-        /*
-            This search for bed heads must be after the search for entities,
-            because some entities may be from existing villages
-            located in unloaded chunks.
-
-            See the experimental performance optimization below.
-         */
-        for (final Integer villageId : aggregator.getAllClusterIds()) {
-            /*
-                An experimental performance optimization:
-                if a cluster is fully unloaded,
-                villagers or other units can't be loaded,
-                so there is no reason to process the cluster for now.
-
-                Otherwise, it takes too long for the server to start with big maps.
-            */
-            if(villages.containsKey(villageId)
-                    || !aggregator.getClusterLoaded(villageId).equals(ClusterLoaded.NO)) {
-
-                vg.apply(villageId).addAllBedHeads(aggregator.getBlocksInCluster(villageId, (Block block) -> {
-                    if (block.getBlockData() instanceof org.bukkit.block.data.type.Bed) {
-                        final org.bukkit.block.data.type.Bed bed
-                                = (org.bukkit.block.data.type.Bed) block.getBlockData();
-                        return (bed.getPart() == Bed.Part.HEAD);
-                    }
-                    return false;
-                }));
-            }
-        }
 
         return villages;
     }
@@ -285,7 +289,7 @@ public class VillageInfo {
         final Village lostVillage = villages.get(LOST_VILLAGE_ID);
 
         for (final Villager villager : lostVillage.getVillagers()) {
-            customLogger.warning(String.format("Something went completely wrong and we lost a %s", format(villager)));
+            somethingWentWrong(String.format("we lost a %s", format(villager)));
         }
 
         removed += removeLostEntities(lostVillage.getNaturalIronGolems(), "iron golem");
@@ -446,12 +450,12 @@ public class VillageInfo {
         return viewer.getTextLines();
     }
 
-    private <T> T measureTime(final Func<T> func, final Consumer<Long> consumer) {
+    private <T> T measureTime(final Supplier<T> func, final Consumer<Long> consumer) {
         long startTime = 0;
         if(customLogger.isDebugMode()) {
             startTime = System.currentTimeMillis();
         }
-        final T result = func.call();
+        final T result = func.get();
         if(customLogger.isDebugMode()) {
             final long endTime = System.currentTimeMillis();
             consumer.accept(endTime - startTime);
@@ -465,5 +469,9 @@ public class VillageInfo {
         } else {
             return "";
         }
+    }
+
+    private void somethingWentWrong(final String message) {
+        customLogger.warning(String.format("Something went completely wrong and %s", message));
     }
 }
