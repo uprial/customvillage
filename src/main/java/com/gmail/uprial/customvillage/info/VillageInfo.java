@@ -116,6 +116,19 @@ public class VillageInfo {
                     }
                 }
                 final Village village = getOrCreateVillages(entity.getWorld()).get(villageId);
+                if(village == null) {
+                /*
+[21:38:20 ERROR]: Could not pass event CreatureSpawnEvent to CustomVillage v0.1.10
+java.lang.NullPointerException: Cannot invoke "com.gmail.uprial.customvillage.info.Village.getNaturalIronGolems()" because "village" is null
+	at CustomVillage-0.1.10.jar/com.gmail.uprial.customvillage.info.VillageInfo.isEntityLimited(VillageInfo.java:123) ~[CustomVillage-0.1.10.jar:?]
+	at CustomVillage-0.1.10.jar/com.gmail.uprial.customvillage.CustomVillage.isEntityLimited(CustomVillage.java:110) ~[CustomVillage-0.1.10.jar:?]
+	at CustomVillage-0.1.10.jar/com.gmail.uprial.customvillage.listeners.CustomVillageBreedingEventListener.onCreatureSpawnEvent(CustomVillageBreedingEventListener.java:52) ~[CustomVillage-0.1.10.jar:?]
+	at co.aikar.timings.TimedEventExecutor.execute(TimedEventExecutor.java:80) ~[paper-api-1.21.5-R0.1-SNAPSHOT.jar:?]
+	at org.bukkit.plugin.RegisteredListener.callEvent(RegisteredListener.java:71) ~[paper-api-1.21.5-R0.1-SNAPSHOT.jar:?]
+                 */
+                    customLogger.debug(String.format("Spawn attempt of %s in a not yet even partially loaded cluster", format(entity)));
+                    return true;
+                }
 
                 if(entity.getType().equals(EntityType.VILLAGER)) {
                     return village.getVillagers().size() >= village.getVillagersLimit();
