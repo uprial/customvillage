@@ -20,6 +20,8 @@ I ended up with a mess of hundreds of illegal entities on the map. Fortunately, 
 * Calculate a number of beds in the villages and limit villagers population considering the beds
 * Limit population of cats (not tamed) and iron golems (non-player created) strongly according to the documentation
 
+![a Minecraft picture: the village with villagers, iron golems and cats with a sign about population limit without numbers, everybody are surprised](images/customvillage-promo.png)
+
 ## Limit mechanics.
 
 All village-decisive entities: beds, golems, cats, villagers - are clustered in clusters of 32x12x32 size for X, Y, and Z coordinates.
