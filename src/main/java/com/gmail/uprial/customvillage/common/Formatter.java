@@ -17,7 +17,7 @@ public final class Formatter {
                 (location.getWorld() != null) ? location.getWorld().getName() : "empty",
                 location.getX(), location.getY(), location.getZ(),
                 (entity instanceof LivingEntity) ? ((LivingEntity) entity).getHealth() : -1,
-                entity.getUniqueId());
+                entity.getUniqueId().toString().substring(0, 8));
     }
 
     public static String format(Vector vector) {

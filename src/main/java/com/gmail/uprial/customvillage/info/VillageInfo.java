@@ -22,16 +22,66 @@ import static com.gmail.uprial.customvillage.info.Village.isUserEntity;
 public class VillageInfo {
     private static final int LOST_VILLAGE_ID = -1;
 
-    private class Villages extends HashMap<Integer,Village> {
+    class Villages extends HashMap<Integer,Village> {
 
-        void callIfExists(final Integer villageId, final LivingEntity entity, final Consumer<Village> func) {
+        void callIfExists(final Integer villageId,
+                          final LivingEntity entity,
+                          final Consumer<Village> func) {
             final Village village = get(villageId);
-            if(village == null) {
-                // The only purpose of passing entity is to write a good warning message.
-                somethingWentWrong(String.format("we gonna try to put %s into a village #%d",
-                        format(entity), villageId));
-            } else {
+            if(village != null) {
                 func.accept(village);
+            } else if (customLogger.isDebugMode()) {
+                /*
+                getVillages() considers Villages
+                only when their chunks are at least partly loaded.
+
+                Minecraft Server (I've no idea why!) keeps entities loaded
+                when blocks in their chunks aren't fully loaded.
+
+                So, there may be entities without Villages.
+
+                Here is an example of debug info generated,
+                with additional data in callIfExists():
+                final Collection<Villager> villagers.
+
+                customLogger.warning("==== BEGIN ====");
+                for(final Villager villager : villagers) {
+                    customLogger.warning(format(villager));
+                }
+                customLogger.warning(this.toString());
+
+[12:59:29] [WARNING] Something went completely wrong and we gonna try to put VILLAGER[w: world, x: -297, y: 75, z: 1991, hp: 20.00, id: 399449a9-9a2e-40da-b3a4-ed9cebbd7ef1] into a village #14
+==== BEGIN ====
+VILLAGER[w: world, x: -297, y: 75, z: 1991, hp: 20.00, id: 399449a9-9a2e-40da-b3a4-ed9cebbd7ef1]
+VILLAGER[w: world, x: -191, y: 62, z: 1342, hp: 11.00, id: d59d6153-e42b-4be7-bcdf-0580d060a07e]
+VILLAGER[w: world, x: -182, y: 62, z: 1342, hp: 19.00, id: 5bfa84c0-f4c8-46ff-9efd-ecdfbbdf1832]
+VILLAGER[w: world, x: -179, y: 62, z: 1342, hp: 20.00, id: 62340ead-9963-4f30-b36c-2dca77245523]
+VILLAGER[w: world, x: -184, y: 62, z: 1341, hp: 13.00, id: 21260e35-302c-4af8-86a7-fb60c7187770]
+VILLAGER[w: world, x: -178, y: 62, z: 1342, hp: 20.00, id: f0f77304-90b8-44cb-a1ef-0b7916c9ffd4]
+VILLAGER[w: world, x: -188, y: 62, z: 1349, hp: 18.00, id: ed42a8e3-f2b6-479c-90cb-b551a0708174]
+VILLAGER[w: world, x: -188, y: 54, z: 1346, hp: 14.00, id: 369b1c9f-f693-444e-943a-629515ce7773]
+VILLAGER[w: world, x: -191, y: 62, z: 1348, hp: 18.00, id: a13b43d7-0bd5-4b94-9f67-57ae578008bd]
+VILLAGER[w: world, x: -140, y: 62, z: 1346, hp: 20.00, id: 0b128e51-2cf0-48b5-afb6-2956d542ec6e]
+VILLAGER[w: world, x: -140, y: 62, z: 1346, hp: 20.00, id: 93b8ead8-4531-46a7-a3b0-db3972167544]
+VILLAGER[w: world, x: -164, y: 62, z: 1342, hp: 20.00, id: 00f3e2c5-1f7b-4dcf-af85-131e080e64f5]
+VILLAGER[w: world, x: -168, y: 62, z: 1342, hp: 20.00, id: f0dfe240-8eeb-49de-8e21-ec7e2c7901a9]
+VILLAGER[w: world, x: -175, y: 62, z: 1342, hp: 20.00, id: 58560de1-dbae-4245-9c19-aef5463df7e5]
+VILLAGER[w: world, x: -195, y: 62, z: 1342, hp: 20.00, id: 086507b4-01b2-4d3a-874b-48e7c720c509]
+VILLAGER[w: world, x: -142, y: 62, z: 1346, hp: 20.00, id: b39a1529-0a48-449d-b530-1c580f5b7e27]
+VILLAGER[w: world, x: -193, y: 62, z: 1349, hp: 19.00, id: abbab2da-f93d-430f-a2c6-6217f81f936b]
+VILLAGER[w: world, x: -195, y: 62, z: 1349, hp: 18.00, id: bd82ebb3-018b-449d-afc7-b36fba5959d9]
+VILLAGER[w: world, x: -208, y: 47, z: 1270, hp: 19.00, id: 1545378c-8f0a-4b40-b08f-96215d0e2ba8]
+VILLAGER[w: world, x: -208, y: 47, z: 1269, hp: 18.00, id: a452d383-6429-47a1-843b-42ffe2bc4675]
+VILLAGER[w: world, x: -208, y: 47, z: 1269, hp: 20.00, id: 1d095d23-b54d-4b2a-a3c6-ccff16bf38bb]
+{-1=Village{villagers: 0, bed-heads: 0, iron-golems{natural: 0, user: 0, all: 0}, cats{natural: 0, user: 0, all: 0}},
+17=Village{villagers: 0, bed-heads: 17, iron-golems{natural: 0, user: 0, all: 0}, cats{natural: 0, user: 0, all: 0}},
+18=Village{villagers: 0, bed-heads: 4, iron-golems{natural: 0, user: 0, all: 0}, cats{natural: 0, user: 0, all: 0}}}
+                 */
+                // The only purpose of passing entity is to write a good warning message.
+                customLogger.debug(String.format(
+                        "We try to put %s into a village #%d," +
+                                " but it isn't loaded",
+                        format(entity), villageId));
             }
         }
     }
@@ -162,7 +212,7 @@ java.lang.NullPointerException: Cannot invoke "com.gmail.uprial.customvillage.in
         }, (time) -> customLogger.debug(String.format("%s in %dms.", whatHasBeenDone, time)));
     }
 
-    private CustomStorage getStorage(final World world) {
+    CustomStorage getStorage(final World world) {
         final String filename = String.format("%s_villages.txt", world.getName());
         return new CustomStorage(plugin.getDataFolder(), filename, customLogger);
     }
@@ -189,7 +239,7 @@ java.lang.NullPointerException: Cannot invoke "com.gmail.uprial.customvillage.in
         return villages;
     }
 
-    private Villages getVillages(final World world) {
+    Villages getVillages(final World world) {
         // Populate an aggregator
         final ClusterAggregator aggregator = getOrCreateAggregator(world);
         aggregator.populate(world.getEntitiesByClass(Villager.class));
