@@ -31,7 +31,7 @@ public final class CustomVillageConfig {
     public static CustomVillageConfig getFromConfig(FileConfiguration config, CustomLogger customLogger) throws InvalidConfigException {
         boolean enabled = ConfigReaderSimple.getBoolean(config, customLogger, "enabled", "'enabled' flag", true);
 
-        int timeoutInMs = ConfigReaderNumbers.getInt(config, customLogger, "timeout-in-ms", "'timeout-in-ms' value", 1, 3600_000, 5);
+        int timeoutInMs = ConfigReaderNumbers.getInt(config, customLogger, "timeout-in-ms", "'timeout-in-ms' value", 1, 3600_000, 50);
 
         return new CustomVillageConfig(enabled, timeoutInMs);
     }
