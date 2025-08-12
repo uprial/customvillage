@@ -1,5 +1,6 @@
 package com.gmail.uprial.customvillage;
 
+import com.gmail.uprial.customvillage.config.InvalidConfigException;
 import com.gmail.uprial.customvillage.helpers.TestConfigBase;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.junit.Rule;
@@ -39,9 +40,27 @@ public class CustomVillageConfigTest extends TestConfigBase {
     }
 
     @Test
+    public void testWrongEnabled() throws Exception {
+        e.expect(InvalidConfigException.class);
+        e.expectMessage("");
+        loadConfig("enabled: v");
+    }
+
+    @Test
+    public void testWrongTimeoutInS() throws Exception {
+        e.expect(InvalidConfigException.class);
+        e.expectMessage("");
+        loadConfig("enabled: true",
+                "timeout-in-ms: v");
+    }
+
+    @Test
     public void testNormalConfig() throws Exception {
         assertEquals(
-                "enabled: true",
-                loadConfig(getCustomLogger(), "enabled: true").toString());
+                "enabled: true, " +
+                "timeout-in-ms: 50",
+                loadConfig(getCustomLogger(),
+                        "enabled: true",
+                        "timeout-in-ms: 50").toString());
     }
 }

@@ -16,3 +16,15 @@ debug: false
 # Enable main features. Possible values: true | false (default = false)
 #
 enabled: true
+
+#
+# Show a warning when periodic updates more time than expected.
+#
+# When reporting to the plugin Author with details about
+# the village info, other plugins, previous log records, etc.,
+# you may request an improvement of the plugin for your server.
+#
+# Possible values: 1 ... 3600_000.
+# Default value: 50.
+#
+timeout-in-ms: 50

@@ -43,8 +43,8 @@ public final class CustomVillage extends JavaPlugin {
 
         villageInfo = new VillageInfo(this, consoleLogger);
 
-        saveCron = new SaveCron(this);
-        updateCron = new UpdateCron(this);
+        saveCron = new SaveCron(this, consoleLogger, customVillageConfig.getTimeoutInMs());
+        updateCron = new UpdateCron(this, consoleLogger, customVillageConfig.getTimeoutInMs());
         getServer().getPluginManager().registerEvents(new CustomVillageBreedingEventListener(this, consoleLogger), this);
         getServer().getPluginManager().registerEvents(new CustomVillageBlocksListener(this), this);
 

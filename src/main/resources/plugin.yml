@@ -1,6 +1,6 @@
 name: CustomVillage
 main: com.gmail.uprial.customvillage.CustomVillage
-version: 0.1.12
+version: 0.1.13
 api-version: 1.14
 commands:
   customvillage:
