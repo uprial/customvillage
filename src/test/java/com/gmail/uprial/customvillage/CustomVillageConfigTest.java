@@ -42,14 +42,14 @@ public class CustomVillageConfigTest extends TestConfigBase {
     @Test
     public void testWrongEnabled() throws Exception {
         e.expect(InvalidConfigException.class);
-        e.expectMessage("");
+        e.expectMessage("Invalid 'enabled' flag");
         loadConfig("enabled: v");
     }
 
     @Test
     public void testWrongTimeoutInS() throws Exception {
         e.expect(InvalidConfigException.class);
-        e.expectMessage("");
+        e.expectMessage("A 'timeout-in-ms' value is not an integer");
         loadConfig("enabled: true",
                 "timeout-in-ms: v");
     }
