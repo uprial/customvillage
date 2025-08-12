@@ -18,7 +18,7 @@ debug: false
 enabled: true
 
 #
-# Show a warning when periodic updates more time than expected.
+# Show a warning when periodic updates take more time than expected.
 #
 # When reporting to the plugin Author with details about
 # the village info, other plugins, previous log records, etc.,
